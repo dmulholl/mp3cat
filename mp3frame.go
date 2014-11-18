@@ -2,6 +2,7 @@ package main
 
 import "io"
 import "bytes"
+import "encoding/binary"
 
 
 // MPEG version enum.
@@ -27,7 +28,7 @@ const (
     Stereo = iota
     JointStereo
     DualChannel
-    SingleChannel
+    Mono
 )
 
 
@@ -291,28 +292,32 @@ func parseHeader(header []byte, frame *Mp3Frame) bool {
 }
 
 
-func isXingHeader(frame *Mp3Frame) bool {
-
-    sizeFrameHeader := 4
-    sizeSideInformation := 0
+func getSideInformationSize(frame *Mp3Frame) (size int) {
 
     if frame.MpegLayer == MpegLayerIII {
         if frame.MpegVersion == MpegVersion1 {
-            if frame.ChannelMode == SingleChannel {
-                sizeSideInformation = 17
+            if frame.ChannelMode == Mono {
+                size = 17
             } else {
-                sizeSideInformation = 32
+                size = 32
             }
         } else {
-            if frame.ChannelMode == SingleChannel {
-                sizeSideInformation = 9
+            if frame.ChannelMode == Mono {
+                size = 9
             } else {
-                sizeSideInformation = 17
+                size = 17
             }
         }
     }
 
-    offset := sizeFrameHeader + sizeSideInformation
+    return size
+}
+
+
+func isXingHeader(frame *Mp3Frame) bool {
+
+    // 4 bytes for the frame header plus the size of the side information block.
+    offset := 4 + getSideInformationSize(frame)
     id := frame.RawBytes[offset:offset + 4]
 
     if bytes.Equal(id, []byte("Xing")) || bytes.Equal(id, []byte("Info")) {
@@ -325,7 +330,7 @@ func isXingHeader(frame *Mp3Frame) bool {
 
 func isVbriHeader(frame *Mp3Frame) bool {
 
-    // 4 bytes for the frame header followed by a fixed 32 byte offset.
+    // 4 bytes for the frame header plus a fixed 32-byte offset.
     id := frame.RawBytes[36:36 + 4]
 
     if bytes.Equal(id, []byte("VBRI")) {
@@ -333,4 +338,35 @@ func isVbriHeader(frame *Mp3Frame) bool {
     }
 
     return false
+}
+
+
+func newXingHeader(template *Mp3Frame, totalFrames, totalBytes uint32) *Mp3Frame {
+
+    // Make a shallow copy of the template frame.
+    xingFrame := *template
+
+    // Make a new zeroed-out data slice.
+    xingFrame.RawBytes = make([]byte, xingFrame.FrameLength)
+
+    // Copy over the frame header.
+    copy(xingFrame.RawBytes, template.RawBytes[:4])
+
+    // Determine the Xing header offset.
+    offset := 4 + getSideInformationSize(template)
+
+    // Write the Xing header ID.
+    copy(xingFrame.RawBytes[offset:offset + 4], []byte("Xing"))
+
+    // Write a flag indicating that the number-of-frames
+    // and number-of-bytes fields are present.
+    xingFrame.RawBytes[offset + 7] = 3
+
+    // Write the number of frames as a 32-bit big endian integer.
+    binary.BigEndian.PutUint32(xingFrame.RawBytes[offset + 8:offset + 12], totalFrames)
+
+    // Write the number of bytes as a 32-bit big endian integer.
+    binary.BigEndian.PutUint32(xingFrame.RawBytes[offset + 12:offset + 16], totalBytes)
+
+    return &xingFrame
 }

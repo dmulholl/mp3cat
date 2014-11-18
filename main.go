@@ -10,12 +10,13 @@ package main
 
 import (
     "fmt"
+    "io"
     "os"
     "flag"
 )
 
 
-var version = "0.1.0"
+var version = "0.2.0"
 
 
 var usage = `Usage: mp3cat [FLAGS] ARGUMENTS
@@ -72,9 +73,10 @@ func main() {
         fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
-    defer outputFile.Close()
 
-    totalFrames := 0
+    var totalFrames uint32
+    var totalBytes uint32
+
     firstBitRate := 0
     isVBR := false
 
@@ -85,7 +87,6 @@ func main() {
             fmt.Fprintln(os.Stderr, err)
             os.Exit(1)
         }
-        defer inputFile.Close()
 
         isFirstFrame := true
 
@@ -116,6 +117,7 @@ func main() {
             }
 
             totalFrames += 1
+            totalBytes += uint32(len(frame.RawBytes))
         }
 
         inputFile.Close()
@@ -124,8 +126,53 @@ func main() {
     outputFile.Close()
 
     if isVBR {
+
         // We need to rewrite the file, adding an Xing header at the front.
         debug("vbr file")
+
+        outputFile, err := os.Create(outputPath + ".tmp")
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        inputFile, err := os.Open(outputPath)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        firstFrame := nextFrame(inputFile)
+        inputFile.Seek(0, 0)
+
+        xingHeader := newXingHeader(firstFrame, totalFrames, totalBytes)
+
+        _, err = outputFile.Write(xingHeader.RawBytes)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        _, err = io.Copy(outputFile, inputFile)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        inputFile.Close()
+        outputFile.Close()
+
+        err = os.Remove(outputPath)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        err = os.Rename(outputPath + ".tmp", outputPath)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
     }
 
     debug(fmt.Sprintf("total frames: %v", totalFrames))

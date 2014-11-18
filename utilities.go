@@ -5,7 +5,7 @@ import "os"
 import "io"
 
 
-// Flag for controlling the display of debugging information.
+// Flag controlling the display of debugging information.
 var debugMode = false
 
 
