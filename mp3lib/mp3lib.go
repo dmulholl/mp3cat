@@ -1,8 +1,22 @@
-package main
+/*
+    Package mp3lib provides basic functionality for parsing MP3 files.
 
-import "io"
-import "bytes"
-import "encoding/binary"
+      * Author: Darren Mulholland <dmulholland@outlook.ie>
+      * License: Public Domain
+
+*/
+package mp3lib
+
+
+import (
+    "io"
+    "bytes"
+    "encoding/binary"
+)
+
+
+// Package version number.
+const Version = "0.3.0"
 
 
 // MPEG version enum.
@@ -47,7 +61,7 @@ var v2_sr  = []int{22050, 24000, 16000}
 var v25_sr = []int{11025, 12000,  8000}
 
 
-// Mp3Frame represents a single frame parsed from an MP3 stream.
+// Mp3Frame represents an individual frame parsed from an MP3 stream.
 type Mp3Frame struct {
     MpegVersion byte
     MpegLayer byte
@@ -67,45 +81,72 @@ type Mp3Frame struct {
 }
 
 
-// nextFrame loads the next MP3 frame from the input stream.
+// ID3v1Tag represents an ID3v1 tag.
+type ID3v1Tag struct {
+    RawBytes []byte
+}
+
+
+// ID3v2Tag represents an ID3v2 tag.
+type ID3v2Tag struct {
+    RawBytes []byte
+}
+
+
+// NextFrame loads the next MP3 frame from the input stream.
+// Skips over ID3 tags and unrecognised/garbage data in the stream.
 // Returns nil when the stream has been exhausted.
-func nextFrame(stream io.Reader) *Mp3Frame {
+func NextFrame(stream io.Reader) *Mp3Frame {
+    for {
+        obj := NextObject(stream)
+        switch obj := obj.(type) {
+        case *Mp3Frame:
+            return obj
+        case *ID3v1Tag:
+            debug("skipping ID3v1 tag")
+        case *ID3v2Tag:
+            debug("skipping ID3v2 tag")
+        case nil:
+            return nil
+        }
+    }
+}
+
+
+// NextObject loads the next recognised object from the input stream.
+// Skips over unrecognised/garbage data in the stream.
+// Returns *MP3Frame, *ID3v1Tag, *ID3v2Tag, or nil when the
+// stream has been exhausted.
+func NextObject(stream io.Reader) interface{} {
 
     // Each MP3 frame begins with a 4-byte header.
     buffer := make([]byte, 4)
     lastByte := buffer[3:]
-    frame := &Mp3Frame{}
 
     // Fill the header buffer.
     if ok := fillBuffer(stream, buffer); !ok {
         return nil
     }
 
-    // Loop until we find a frame or reach the end of the stream.
+    // Scan forward until we find an object or reach the end of the stream.
     for {
 
         // Check for an ID3v1 tag: 'TAG'.
         if buffer[0] == 84 && buffer[1] == 65 && buffer[2] == 71 {
 
-            debug("skipping ID3v1 tag")
+            tag := &ID3v1Tag{}
+            tag.RawBytes = make([]byte, 128)
+            copy(tag.RawBytes, buffer)
 
-            // Read the remainder of the tag and discard it.
-            // ID3v1 tags have a fixed length of 128 bytes.
-            remainder := make([]byte, 124)
-            if ok := fillBuffer(stream, remainder); !ok {
+            if ok := fillBuffer(stream, tag.RawBytes[4:]); !ok {
                 return nil
             }
 
-            // Refill the header buffer.
-            if ok := fillBuffer(stream, buffer); !ok {
-                return nil
-            }
+            return tag
         }
 
         // Check for an ID3v2 tag: 'ID3'.
         if buffer[0] == 73 && buffer[1] == 68 && buffer[2] == 51 {
-
-            debug("skipping ID3v2 tag")
 
             // Read the remainder of the 10 byte tag header.
             remainder := make([]byte, 6)
@@ -121,23 +162,24 @@ func nextFrame(stream io.Reader) *Mp3Frame {
                 (int(remainder[4]) << (7 * 1)) |
                 (int(remainder[5]) << (7 * 0))
 
-            // Read the tag data and discard it.
-            data := make([]byte, length)
-            if ok := fillBuffer(stream, data); !ok {
+
+            tag := &ID3v2Tag{}
+            tag.RawBytes = make([]byte, 10 + length)
+            copy(tag.RawBytes, buffer)
+            copy(tag.RawBytes[4:], remainder)
+
+            if ok := fillBuffer(stream, tag.RawBytes[10:]); !ok {
                 return nil
             }
 
-            // Refill the header buffer.
-            if ok := fillBuffer(stream, buffer); !ok {
-                return nil
-            }
+            return tag
         }
 
         // Check for a frame header, indicated by an 11-bit frame-sync sequence.
         if buffer[0] == 0xFF && (buffer[1] & 0xE0) == 0xE0 {
 
-            // Check if the header is valid. If it is, parse its values
-            // into our Mp3Frame struct.
+            frame := &Mp3Frame{}
+
             if ok := parseHeader(buffer, frame); ok {
 
                 frame.RawBytes = make([]byte, frame.FrameLength)
@@ -151,7 +193,7 @@ func nextFrame(stream io.Reader) *Mp3Frame {
             }
         }
 
-        // No frame yet. Shift the buffer forward by one byte and try again.
+        // Nothing found. Shift the buffer forward by one byte and try again.
         debug("sync error: skipping byte")
         buffer[0] = buffer[1]
         buffer[1] = buffer[2]
@@ -292,7 +334,9 @@ func parseHeader(header []byte, frame *Mp3Frame) bool {
 }
 
 
-func getSideInformationSize(frame *Mp3Frame) (size int) {
+// getSideInfoSize returns the length in bytes of the side information section
+// of the supplied MP3 frame.
+func getSideInfoSize(frame *Mp3Frame) (size int) {
 
     if frame.MpegLayer == MpegLayerIII {
         if frame.MpegVersion == MpegVersion1 {
@@ -314,10 +358,12 @@ func getSideInformationSize(frame *Mp3Frame) (size int) {
 }
 
 
-func isXingHeader(frame *Mp3Frame) bool {
+// IsXingHeader returns true if the supplied frame is an Xing VBR header.
+func IsXingHeader(frame *Mp3Frame) bool {
 
-    // 4 bytes for the frame header plus the size of the side information block.
-    offset := 4 + getSideInformationSize(frame)
+    // The Xing header begins directly after the side information block.
+    // We also need to allow 4 bytes for the frame header.
+    offset := 4 + getSideInfoSize(frame)
     id := frame.RawBytes[offset:offset + 4]
 
     if bytes.Equal(id, []byte("Xing")) || bytes.Equal(id, []byte("Info")) {
@@ -328,9 +374,11 @@ func isXingHeader(frame *Mp3Frame) bool {
 }
 
 
-func isVbriHeader(frame *Mp3Frame) bool {
+// IsVbriHeader returns true if the supplied frame is a Fraunhofer VBRI header.
+func IsVbriHeader(frame *Mp3Frame) bool {
 
-    // 4 bytes for the frame header plus a fixed 32-byte offset.
+    // The VBRI header begins after a fixed 32-byte offset.
+    // We also need to allow 4 bytes for the frame header.
     id := frame.RawBytes[36:36 + 4]
 
     if bytes.Equal(id, []byte("VBRI")) {
@@ -341,7 +389,9 @@ func isVbriHeader(frame *Mp3Frame) bool {
 }
 
 
-func newXingHeader(template *Mp3Frame, totalFrames, totalBytes uint32) *Mp3Frame {
+// NewXingHeader creates an Xing VBR header frame. Frame attributes are copied from
+// the supplied template frame.
+func NewXingHeader(template *Mp3Frame, totalFrames, totalBytes uint32) *Mp3Frame {
 
     // Make a shallow copy of the template frame.
     xingFrame := *template
@@ -353,7 +403,7 @@ func newXingHeader(template *Mp3Frame, totalFrames, totalBytes uint32) *Mp3Frame
     copy(xingFrame.RawBytes, template.RawBytes[:4])
 
     // Determine the Xing header offset.
-    offset := 4 + getSideInformationSize(template)
+    offset := 4 + getSideInfoSize(template)
 
     // Write the Xing header ID.
     copy(xingFrame.RawBytes[offset:offset + 4], []byte("Xing"))

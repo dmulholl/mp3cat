@@ -1,17 +1,20 @@
-package main
+package mp3lib
 
-import "fmt"
-import "os"
-import "io"
+
+import (
+    "fmt"
+    "os"
+    "io"
+)
 
 
 // Flag controlling the display of debugging information.
-var debugMode = false
+var DebugMode = false
 
 
 // debug prints debugging information to stderr.
 func debug(message string) {
-    if debugMode {
+    if DebugMode {
         fmt.Fprintln(os.Stderr, message)
     }
 }
