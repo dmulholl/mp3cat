@@ -1,6 +1,9 @@
 /*
     Command line utility for concatenating MP3 files without re-encoding.
 
+    Supports both constant bit rate (CBR) and variable bit rate (VBR) files.
+    Strips ID3 tags and garbage data from the output.
+
       * Author: Darren Mulholland <dmulholland@outlook.ie>
       * License: Public Domain
 
@@ -17,27 +20,41 @@ import (
 )
 
 
-const version = "0.3.0"
+const version = "0.4.0"
 
 
 const usage = `Usage: mp3cat [FLAGS] ARGUMENTS
 
+Concatenates MP3 files without re-encoding. Supports both CBR and VBR files.
+Strips ID3 tags and garbage data from the output.
+
 Arguments:
 
-  <outfile>    Output filename.
-  <infiles>    List of input files to concatenate.
+  <outfile>        Output file.
+  <infiles>        List of input files to concatenate.
 
 Flags:
 
-  --help       Display this help text and exit.
-  --version    Display version number and exit.`
+  -f, --force      Force overwriting of existing output files.
+  -v, --verbose    Report progress.
+  --help           Display this help text and exit.
+  --version        Display version number and exit.`
+
+
+var helpFlag = flag.Bool("help", false, "print help text and exit")
+var versionFlag = flag.Bool("version", false, "print version and exit")
+var debugFlag = flag.Bool("debug", false, "print debug information")
+var forceFlag = flag.Bool("force", false, "force overwriting of existing output files")
+var verboseFlag = flag.Bool("verbose", false, "increase verbosity")
+
+
+func init() {
+    flag.BoolVar(forceFlag, "f", false, "force overwriting of existing output files")
+    flag.BoolVar(verboseFlag, "v", false, "increase verbosity")
+}
 
 
 func main() {
-
-    var helpFlag = flag.Bool("help", false, "print help text and exit")
-    var versionFlag = flag.Bool("version", false, "print version and exit")
-    var debugFlag = flag.Bool("debug", false, "print debug information")
 
     flag.Usage = func() {
         fmt.Println()
@@ -61,7 +78,7 @@ func main() {
     }
 
     if flag.NArg() < 2 {
-        fmt.Fprintln(os.Stderr, "error: too few arguments\n")
+        fmt.Fprintln(os.Stderr, "Error: you must supply at least two arguments.\n")
         fmt.Fprintln(os.Stderr, usage)
         os.Exit(1)
     }
@@ -77,6 +94,21 @@ func mergeFiles(outputPath string, inputPaths []string) {
     var firstBitRate int
     var isVBR bool
 
+    if _, err := os.Stat(outputPath); err == nil {
+        if !(*forceFlag) {
+            fmt.Fprintf(os.Stderr, "Error: \"%v\" already exists.\n", outputPath)
+            fmt.Fprintf(os.Stderr, "Use the --force flag to overwrite it.\n")
+            os.Exit(1)
+        }
+    }
+
+    for _, filepath := range inputPaths {
+        if filepath == outputPath {
+            fmt.Fprintln(os.Stderr, "Error: the list of input files includes the output file.")
+            os.Exit(1)
+        }
+    }
+
     outputFile, err := os.Create(outputPath)
     if err != nil {
         fmt.Fprintln(os.Stderr, err)
@@ -84,6 +116,10 @@ func mergeFiles(outputPath string, inputPaths []string) {
     }
 
     for _, filepath := range inputPaths {
+
+        if *verboseFlag {
+            fmt.Println("Merging:", filepath)
+        }
 
         inputFile, err := os.Open(filepath)
         if err != nil {
@@ -128,6 +164,9 @@ func mergeFiles(outputPath string, inputPaths []string) {
     outputFile.Close()
 
     if isVBR {
+        if *verboseFlag {
+            fmt.Println("VBR data detected. Adding Xing header.")
+        }
         addXingHeader(outputPath, totalFrames, totalBytes)
     }
 }

@@ -10,15 +10,20 @@ bit rate (CBR) and variable bit rate (VBR) files.
 
     Usage: mp3cat [FLAGS] ARGUMENTS
 
+    Concatenates MP3 files without re-encoding. Supports both CBR and VBR files.
+    Strips ID3 tags and garbage data from the output.
+
     Arguments:
 
-      <outfile>    Output filename.
-      <infiles>    List of input files to concatenate.
+      <outfile>        Output file.
+      <infiles>        List of input files to concatenate.
 
     Flags:
 
-      --help       Display this help text and exit.
-      --version    Display version number and exit.
+      -f, --force      Force overwriting of existing output files.
+      -v, --verbose    Report progress.
+      --help           Display this help text and exit.
+      --version        Display version number and exit.
 
 
 ### Installation

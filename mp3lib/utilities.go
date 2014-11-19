@@ -15,7 +15,7 @@ var DebugMode = false
 // debug prints debugging information to stderr.
 func debug(message string) {
     if DebugMode {
-        fmt.Fprintln(os.Stderr, message)
+        fmt.Fprintln(os.Stderr, "DEBUG:", message)
     }
 }
 
