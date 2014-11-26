@@ -20,7 +20,7 @@ import (
 )
 
 
-const version = "0.4.0"
+const version = "0.4.1"
 
 
 const usage = `Usage: mp3cat [FLAGS] ARGUMENTS
@@ -91,6 +91,7 @@ func mergeFiles(outputPath string, inputPaths []string) {
 
     var totalFrames uint32
     var totalBytes uint32
+    var totalFiles int
     var firstBitRate int
     var isVBR bool
 
@@ -159,6 +160,7 @@ func mergeFiles(outputPath string, inputPaths []string) {
         }
 
         inputFile.Close()
+        totalFiles += 1
     }
 
     outputFile.Close()
@@ -168,6 +170,10 @@ func mergeFiles(outputPath string, inputPaths []string) {
             fmt.Println("VBR data detected. Adding Xing header.")
         }
         addXingHeader(outputPath, totalFrames, totalBytes)
+    }
+
+    if *verboseFlag {
+        fmt.Printf("%v files merged.\n", totalFiles)
     }
 }
 
