@@ -25,6 +25,10 @@ bit rate (CBR) and variable bit rate (VBR) files.
       --help           Display this help text and exit.
       --version        Display version number and exit.
 
+Example:
+
+    $ mp3cat output.mp3 input-1.mp3 input-2.mp3 input-3.mp3
+
 
 ### Installation
 
