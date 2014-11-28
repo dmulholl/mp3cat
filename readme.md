@@ -27,7 +27,7 @@ bit rate (CBR) and variable bit rate (VBR) files.
 
 Example:
 
-    $ mp3cat output.mp3 input-1.mp3 input-2.mp3 input-3.mp3
+    $ mp3cat out.mp3 in-1.mp3 in-2.mp3 in-3.mp3
 
 
 ### Installation
