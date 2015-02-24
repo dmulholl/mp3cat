@@ -20,7 +20,7 @@ import (
 )
 
 
-const version = "0.4.1"
+const version = "1.0.0"
 
 
 const usage = `Usage: mp3cat [FLAGS] ARGUMENTS
