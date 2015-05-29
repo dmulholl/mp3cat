@@ -20,27 +20,29 @@ import (
 )
 
 
-const version = "1.0.0"
+// Application version number.
+const version = "1.0.1"
 
 
+// Command line help text.
 const usage = `Usage: mp3cat [FLAGS] ARGUMENTS
 
-Concatenates MP3 files without re-encoding. Supports both CBR and VBR files.
-Strips ID3 tags and garbage data from the output.
+  Concatenates MP3 files without re-encoding. Supports both constant bit rate
+  (CBR) and variable bit rate (VBR) files. Strips ID3 tags and garbage data
+  from the output.
 
 Arguments:
-
   <outfile>        Output file.
   <infiles>        List of input files to concatenate.
 
 Flags:
-
   -f, --force      Force overwriting of existing output files.
   -v, --verbose    Report progress.
   --help           Display this help text and exit.
   --version        Display version number and exit.`
 
 
+// Command line flags - long form.
 var helpFlag = flag.Bool("help", false, "print help text and exit")
 var versionFlag = flag.Bool("version", false, "print version and exit")
 var debugFlag = flag.Bool("debug", false, "print debug information")
@@ -48,13 +50,15 @@ var forceFlag = flag.Bool("force", false, "force overwriting of existing output 
 var verboseFlag = flag.Bool("verbose", false, "increase verbosity")
 
 
+// Command line flags - short form.
 func init() {
     flag.BoolVar(forceFlag, "f", false, "force overwriting of existing output files")
     flag.BoolVar(verboseFlag, "v", false, "increase verbosity")
 }
 
 
-func main() {
+// Parse the command line arguments using the flag package.
+func parseArgs() (outputPath string, inputPaths []string) {
 
     flag.Usage = func() {
         fmt.Println()
@@ -83,10 +87,12 @@ func main() {
         os.Exit(1)
     }
 
-    mergeFiles(flag.Arg(0), flag.Args()[1:])
+    return flag.Arg(0), flag.Args()[1:]
 }
 
 
+// Create a new file at the specified output path containing the merged
+// contents of the list of input files.
 func mergeFiles(outputPath string, inputPaths []string) {
 
     var totalFrames uint32
@@ -95,6 +101,7 @@ func mergeFiles(outputPath string, inputPaths []string) {
     var firstBitRate int
     var isVBR bool
 
+    // Only overwrite an existing file if the --force flag has been used.
     if _, err := os.Stat(outputPath); err == nil {
         if !(*forceFlag) {
             fmt.Fprintf(os.Stderr, "Error: \"%v\" already exists.\n", outputPath)
@@ -103,6 +110,8 @@ func mergeFiles(outputPath string, inputPaths []string) {
         }
     }
 
+    // If the list of input files includes the output file we'll end up
+    // in an infinite loop.
     for _, filepath := range inputPaths {
         if filepath == outputPath {
             fmt.Fprintln(os.Stderr, "Error: the list of input files includes the output file.")
@@ -110,12 +119,15 @@ func mergeFiles(outputPath string, inputPaths []string) {
         }
     }
 
+    // Create the output file.
     outputFile, err := os.Create(outputPath)
     if err != nil {
         fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
 
+    // Loop over the input files and append their MP3 frames to the
+    // output file.
     for _, filepath := range inputPaths {
 
         if *verboseFlag {
@@ -136,6 +148,7 @@ func mergeFiles(outputPath string, inputPaths []string) {
                 break
             }
 
+            // Skip the first frame if it's a VBR header.
             if isFirstFrame {
                 isFirstFrame = false
                 if mp3lib.IsXingHeader(frame) || mp3lib.IsVbriHeader(frame) {
@@ -143,6 +156,8 @@ func mergeFiles(outputPath string, inputPaths []string) {
                 }
             }
 
+            // If we detect more than one bitrate we'll need to add
+            // a VBR header to the output file.
             if firstBitRate == 0 {
                 firstBitRate = frame.BitRate
             } else if frame.BitRate != firstBitRate {
@@ -178,6 +193,7 @@ func mergeFiles(outputPath string, inputPaths []string) {
 }
 
 
+// Prepend an Xing VBR header to the specified MP3 file.
 func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
 
     outputFile, err := os.Create(filepath + ".mp3cat.tmp")
@@ -223,4 +239,10 @@ func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
         fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
+}
+
+
+func main() {
+    outputPath, inputPaths := parseArgs()
+    mergeFiles(outputPath, inputPaths)
 }
