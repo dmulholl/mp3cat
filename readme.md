@@ -14,7 +14,7 @@ A command line utility for joining MP3 files without re-encoding. Supports both 
 
     Arguments:
       <outfile>        Output file.
-      <infiles>        List of input files to concatenate.
+      <infiles>        List of input files to merge.
 
     Flags:
       -f, --force      Force overwriting of existing output files.
@@ -35,7 +35,7 @@ If you have Go installed you can run:
 
 This will download, compile, and install the latest version of the application to your `$GOPATH/bin` directory.
 
-Alternatively, you can download a precompiled binary from the [Releases](https://github.com/dmulholland/mp3cat/releases) page.
+Alternatively, you can download a precompiled binary from the [releases](https://github.com/dmulholland/mp3cat/releases) page.
 
 
 ### License
