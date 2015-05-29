@@ -33,7 +33,7 @@ const usage = `Usage: mp3cat [FLAGS] ARGUMENTS
 
 Arguments:
   <outfile>        Output file.
-  <infiles>        List of input files to concatenate.
+  <infiles>        List of input files to merge.
 
 Flags:
   -f, --force      Force overwriting of existing output files.
