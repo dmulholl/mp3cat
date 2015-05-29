@@ -4,7 +4,7 @@
 A command line utility for joining MP3 files without re-encoding. Supports both constant bit rate (CBR) and variable bit rate (VBR) files.
 
 
-### Usage
+## Usage
 
     Usage: mp3cat [FLAGS] ARGUMENTS
 
@@ -27,7 +27,7 @@ Example:
     $ mp3cat out.mp3 1.mp3 2.mp3 3.mp3
 
 
-### Installation
+## Installation
 
 If you have Go installed you can run:
 
@@ -38,6 +38,6 @@ This will download, compile, and install the latest version of the application t
 Alternatively, you can download a precompiled binary from the [releases](https://github.com/dmulholland/mp3cat/releases) page.
 
 
-### License
+## License
 
 This work has been placed in the public domain.
