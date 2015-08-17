@@ -6,25 +6,27 @@ A command line utility for joining MP3 files without re-encoding. Supports both 
 
 ## Usage
 
-    Usage: mp3cat [FLAGS] ARGUMENTS
+    Usage: mp3cat [FLAGS] [OPTIONS] ARGUMENTS
 
       Concatenates MP3 files without re-encoding. Supports both constant bit rate
       (CBR) and variable bit rate (VBR) files. Strips ID3 tags and garbage data
       from the output.
 
     Arguments:
-      <outfile>        Output file.
-      <infiles>        List of input files to merge.
+      <files>           List of input files to merge.
+
+    Options:
+      -o, --out <file>  Output filename. Defaults to 'output.mp3'.
 
     Flags:
-      -f, --force      Force overwriting of existing output files.
-      -v, --verbose    Report progress.
-      --help           Display this help text and exit.
-      --version        Display version number and exit.
+      -f, --force       Overwrite an existing output file.
+      -v, --verbose     Report progress.
+      --help            Display this help text and exit.
+      --version         Display version number and exit.
 
 Example:
 
-    $ mp3cat out.mp3 1.mp3 2.mp3 3.mp3
+    $ mp3cat -o merged.mp3 one.mp3 two.mp3 three.mp3
 
 
 ## Installation

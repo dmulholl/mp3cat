@@ -15,85 +15,75 @@ import (
     "fmt"
     "io"
     "os"
-    "flag"
     "github.com/dmulholland/mp3cat/mp3lib"
+    "github.com/dmulholland/clio/go/clio"
 )
 
 
 // Application version number.
-const version = "1.0.1"
+const version = "2.0.0"
 
 
 // Command line help text.
-const usage = `Usage: mp3cat [FLAGS] ARGUMENTS
+const helptext = `Usage: mp3cat [FLAGS] [OPTIONS] ARGUMENTS
 
   Concatenates MP3 files without re-encoding. Supports both constant bit rate
   (CBR) and variable bit rate (VBR) files. Strips ID3 tags and garbage data
   from the output.
 
 Arguments:
-  <outfile>        Output file.
-  <infiles>        List of input files to merge.
+  <files>           List of input files to merge.
+
+Options:
+  -o, --out <file>  Output filename. Defaults to 'output.mp3'.
 
 Flags:
-  -f, --force      Force overwriting of existing output files.
-  -v, --verbose    Report progress.
-  --help           Display this help text and exit.
-  --version        Display version number and exit.`
+  -f, --force       Overwrite an existing output file.
+  -v, --verbose     Report progress.
+  --help            Display this help text and exit.
+  --version         Display the application's version number and exit.`
 
 
-// Command line flags - long form.
-var helpFlag = flag.Bool("help", false, "print help text and exit")
-var versionFlag = flag.Bool("version", false, "print version and exit")
-var debugFlag = flag.Bool("debug", false, "print debug information")
-var forceFlag = flag.Bool("force", false, "force overwriting of existing output files")
-var verboseFlag = flag.Bool("verbose", false, "increase verbosity")
+// Application entry point.
+func main() {
 
+    // Initialize an argument parser.
+    parser := clio.NewParser(helptext, version)
 
-// Command line flags - short form.
-func init() {
-    flag.BoolVar(forceFlag, "f", false, "force overwriting of existing output files")
-    flag.BoolVar(verboseFlag, "v", false, "increase verbosity")
-}
+    // Register flags.
+    parser.AddFlag("force", 'f')
+    parser.AddFlag("verbose", 'v')
+    parser.AddFlag("debug")
 
+    // Register options.
+    parser.AddStringOption("out", "output.mp3", 'o')
 
-// Parse the command line arguments using the flag package.
-func parseArgs() (outputPath string, inputPaths []string) {
+    // Parse the command line arguments.
+    parser.Parse()
 
-    flag.Usage = func() {
-        fmt.Println()
-        fmt.Println(usage)
-    }
-
-    flag.Parse()
-
-    if *helpFlag {
-        fmt.Println(usage)
-        os.Exit(0)
-    }
-
-    if *versionFlag {
-        fmt.Println(version)
-        os.Exit(0)
-    }
-
-    if *debugFlag {
-        mp3lib.DebugMode = true
-    }
-
-    if flag.NArg() < 2 {
-        fmt.Fprintln(os.Stderr, "Error: you must supply at least two arguments.\n")
-        fmt.Fprintln(os.Stderr, usage)
+    // Make sure we have a list of input files.
+    if !parser.HasArgs() {
+        fmt.Fprintln(os.Stderr, "Error: you must supply a list of files to merge.")
         os.Exit(1)
     }
 
-    return flag.Arg(0), flag.Args()[1:]
+    // Set debug mode if the user supplied a --debug flag.
+    if parser.GetFlag("debug") {
+        mp3lib.DebugMode = true
+    }
+
+    // Merge the input files.
+    mergeFiles(
+        parser.GetStringOption("out"),
+        parser.GetArgs(),
+        parser.GetFlag("force"),
+        parser.GetFlag("verbose"))
 }
 
 
 // Create a new file at the specified output path containing the merged
 // contents of the list of input files.
-func mergeFiles(outputPath string, inputPaths []string) {
+func mergeFiles(outputPath string, inputPaths []string, overwrite bool, verbose bool) {
 
     var totalFrames uint32
     var totalBytes uint32
@@ -103,9 +93,9 @@ func mergeFiles(outputPath string, inputPaths []string) {
 
     // Only overwrite an existing file if the --force flag has been used.
     if _, err := os.Stat(outputPath); err == nil {
-        if !(*forceFlag) {
-            fmt.Fprintf(os.Stderr, "Error: \"%v\" already exists.\n", outputPath)
-            fmt.Fprintf(os.Stderr, "Use the --force flag to overwrite it.\n")
+        if !overwrite {
+            fmt.Fprintf(os.Stderr, "Error: the file '%v' already exists. ", outputPath)
+            fmt.Fprintf(os.Stderr, "Use --force to overwrite it.\n")
             os.Exit(1)
         }
     }
@@ -130,7 +120,7 @@ func mergeFiles(outputPath string, inputPaths []string) {
     // output file.
     for _, filepath := range inputPaths {
 
-        if *verboseFlag {
+        if verbose {
             fmt.Println("Merging:", filepath)
         }
 
@@ -143,6 +133,8 @@ func mergeFiles(outputPath string, inputPaths []string) {
         isFirstFrame := true
 
         for {
+
+            // Read the next frame from the input file.
             frame := mp3lib.NextFrame(inputFile)
             if frame == nil {
                 break
@@ -164,6 +156,7 @@ func mergeFiles(outputPath string, inputPaths []string) {
                 isVBR = true
             }
 
+            // Write the frame to the output file.
             _, err := outputFile.Write(frame.RawBytes)
             if err != nil {
                 fmt.Fprintln(os.Stderr, err)
@@ -180,14 +173,15 @@ func mergeFiles(outputPath string, inputPaths []string) {
 
     outputFile.Close()
 
+    // If we detected multiple bitrates, prepend a VBR header to the file.
     if isVBR {
-        if *verboseFlag {
+        if verbose {
             fmt.Println("VBR data detected. Adding Xing header.")
         }
         addXingHeader(outputPath, totalFrames, totalBytes)
     }
 
-    if *verboseFlag {
+    if verbose {
         fmt.Printf("%v files merged.\n", totalFiles)
     }
 }
@@ -239,10 +233,4 @@ func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
         fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
-}
-
-
-func main() {
-    outputPath, inputPaths := parseArgs()
-    mergeFiles(outputPath, inputPaths)
 }
