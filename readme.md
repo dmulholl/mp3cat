@@ -22,7 +22,7 @@ A command line utility for joining MP3 files without re-encoding. Supports both 
       -f, --force       Overwrite an existing output file.
       -v, --verbose     Report progress.
       --help            Display this help text and exit.
-      --version         Display version number and exit.
+      --version         Display the application's version number and exit.
 
 Example:
 
