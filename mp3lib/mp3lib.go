@@ -9,6 +9,8 @@ package mp3lib
 
 
 import (
+    "fmt"
+    "os"
     "io"
     "bytes"
     "encoding/binary"
@@ -16,7 +18,11 @@ import (
 
 
 // Package version number.
-const Version = "0.3.1"
+const Version = "0.4.0"
+
+
+// Flag controlling the display of debugging information.
+var DebugMode = false
 
 
 // MPEG version enum.
@@ -419,4 +425,23 @@ func NewXingHeader(template *Mp3Frame, totalFrames, totalBytes uint32) *Mp3Frame
     binary.BigEndian.PutUint32(xingFrame.RawBytes[offset + 12:offset + 16], totalBytes)
 
     return &xingFrame
+}
+
+
+// debug prints debugging information to stderr.
+func debug(message string) {
+    if DebugMode {
+        fmt.Fprintln(os.Stderr, "DEBUG:", message)
+    }
+}
+
+
+// fillBuffer attemtps to read len(buffer) bytes from the input stream.
+// Returns a boolean indicating success.
+func fillBuffer(stream io.Reader, buffer []byte) bool {
+    n, _ := io.ReadFull(stream, buffer)
+    if n < len(buffer) {
+        return false
+    }
+    return true
 }
