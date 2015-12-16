@@ -15,17 +15,19 @@ import (
     "fmt"
     "io"
     "os"
+    "path/filepath"
     "github.com/dmulholland/mp3cat/mp3lib"
     "github.com/dmulholland/clio/go/clio"
 )
 
 
 // Application version number.
-const version = "2.0.0"
+const version = "2.0.1"
 
 
 // Command line help text.
-const helptext = `Usage: mp3cat [FLAGS] [OPTIONS] ARGUMENTS
+var helptext = fmt.Sprintf(`
+Usage: %s [FLAGS] [OPTIONS] ARGUMENTS
 
   Concatenates MP3 files without re-encoding. Supports both constant bit rate
   (CBR) and variable bit rate (VBR) files. Strips ID3 tags and garbage data
@@ -39,9 +41,10 @@ Options:
 
 Flags:
   -f, --force       Overwrite an existing output file.
+      --help        Display this help text and exit.
   -v, --verbose     Report progress.
-  --help            Display this help text and exit.
-  --version         Display the application's version number and exit.`
+      --version     Display the application's version number and exit.
+`, filepath.Base(os.Args[0]))
 
 
 // Application entry point.
