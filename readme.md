@@ -20,9 +20,9 @@ A command line utility for joining MP3 files without re-encoding. Supports both 
 
     Flags:
       -f, --force       Overwrite an existing output file.
+          --help        Display this help text and exit.
       -v, --verbose     Report progress.
-      --help            Display this help text and exit.
-      --version         Display the application's version number and exit.
+          --version     Display the application's version number and exit.
 
 Example:
 
