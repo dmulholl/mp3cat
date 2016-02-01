@@ -22,7 +22,7 @@ import (
 
 
 // Application version number.
-const version = "2.0.1"
+const version = "2.1.0"
 
 
 // Command line help text.
@@ -59,7 +59,7 @@ func main() {
     parser.AddFlag("debug")
 
     // Register options.
-    parser.AddStringOption("out", "output.mp3", 'o')
+    parser.AddStrOpt("out", "output.mp3", 'o')
 
     // Parse the command line arguments.
     parser.Parse()
@@ -77,7 +77,7 @@ func main() {
 
     // Merge the input files.
     mergeFiles(
-        parser.GetStringOption("out"),
+        parser.GetStrOpt("out"),
         parser.GetArgs(),
         parser.GetFlag("force"),
         parser.GetFlag("verbose"))
