@@ -37,7 +37,7 @@ If you have Go installed you can run:
 
 This will download, compile, and install the latest version of the application to your `$GOPATH/bin` directory.
 
-Alternatively, you can download a precompiled binary from the [releases](https://github.com/dmulholland/mp3cat/releases) page.
+Alternatively, you can download a precompiled binary [here](http://mulholland.xyz/dev/mp3cat/).
 
 
 ## License
