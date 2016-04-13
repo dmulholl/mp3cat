@@ -1,7 +1,7 @@
 
-# mp3cat
+# MP3Cat
 
-A command line utility for joining MP3 files without re-encoding. Supports both constant bit rate (CBR) and variable bit rate (VBR) files.
+A command line utility for merging MP3 files without re-encoding. Supports both constant bit rate (CBR) and variable bit rate (VBR) files.
 
 
 ## Usage

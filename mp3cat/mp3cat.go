@@ -1,12 +1,5 @@
 /*
     Command line utility for concatenating MP3 files without re-encoding.
-
-    Supports both constant bit rate (CBR) and variable bit rate (VBR) files.
-    Strips ID3 tags and garbage data from the output.
-
-      * Author: Darren Mulholland <dmulholland@outlook.ie>
-      * License: Public Domain
-
 */
 package main
 

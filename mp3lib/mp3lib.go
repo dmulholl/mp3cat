@@ -1,9 +1,5 @@
 /*
     Package mp3lib provides basic functionality for parsing MP3 files.
-
-      * Author: Darren Mulholland <dmulholland@outlook.ie>
-      * License: Public Domain
-
 */
 package mp3lib
 
@@ -18,7 +14,7 @@ import (
 
 
 // Package version number.
-const Version = "0.4.0"
+const Version = "0.5.0"
 
 
 // Flag controlling the display of debugging information.
@@ -27,19 +23,19 @@ var DebugMode = false
 
 // MPEG version enum.
 const (
-    MpegVersion2_5 = iota
-    MpegVersionReserved
-    MpegVersion2
-    MpegVersion1
+    MPEGVersion2_5 = iota
+    MPEGVersionReserved
+    MPEGVersion2
+    MPEGVersion1
 )
 
 
 // MPEG layer enum.
 const (
-    MpegLayerReserved = iota
-    MpegLayerIII
-    MpegLayerII
-    MpegLayerI
+    MPEGLayerReserved = iota
+    MPEGLayerIII
+    MPEGLayerII
+    MPEGLayerI
 )
 
 
@@ -69,8 +65,8 @@ var v25_sr = []int{11025, 12000,  8000}
 
 // Mp3Frame represents an individual frame parsed from an MP3 stream.
 type Mp3Frame struct {
-    MpegVersion byte
-    MpegLayer byte
+    MPEGVersion byte
+    MPEGLayer byte
     CrcProtection bool
     BitRate int
     SamplingRate int
@@ -218,14 +214,14 @@ func NextObject(stream io.Reader) interface{} {
 func parseHeader(header []byte, frame *Mp3Frame) bool {
 
     // MPEG version. (2 bits)
-    frame.MpegVersion = (header[1] & 0x18) >> 3
-    if frame.MpegVersion == MpegVersionReserved {
+    frame.MPEGVersion = (header[1] & 0x18) >> 3
+    if frame.MPEGVersion == MPEGVersionReserved {
         return false
     }
 
     // MPEG layer. (2 bits.)
-    frame.MpegLayer = (header[1] & 0x06) >> 1
-    if frame.MpegLayer == MpegLayerReserved {
+    frame.MPEGLayer = (header[1] & 0x06) >> 1
+    if frame.MPEGLayer == MPEGLayerReserved {
         return false
     }
 
@@ -239,17 +235,17 @@ func parseHeader(header []byte, frame *Mp3Frame) bool {
     }
 
     // Bit rate.
-    if frame.MpegVersion == MpegVersion1 {
-        switch frame.MpegLayer {
-        case MpegLayerI:   frame.BitRate = v1l1_br[bitRateIndex] * 1000
-        case MpegLayerII:  frame.BitRate = v1l2_br[bitRateIndex] * 1000
-        case MpegLayerIII: frame.BitRate = v1l3_br[bitRateIndex] * 1000
+    if frame.MPEGVersion == MPEGVersion1 {
+        switch frame.MPEGLayer {
+        case MPEGLayerI:   frame.BitRate = v1l1_br[bitRateIndex] * 1000
+        case MPEGLayerII:  frame.BitRate = v1l2_br[bitRateIndex] * 1000
+        case MPEGLayerIII: frame.BitRate = v1l3_br[bitRateIndex] * 1000
         }
     } else {
-        switch frame.MpegLayer {
-        case MpegLayerI:   frame.BitRate = v2l1_br[bitRateIndex] * 1000
-        case MpegLayerII:  frame.BitRate = v2l2_br[bitRateIndex] * 1000
-        case MpegLayerIII: frame.BitRate = v2l3_br[bitRateIndex] * 1000
+        switch frame.MPEGLayer {
+        case MPEGLayerI:   frame.BitRate = v2l1_br[bitRateIndex] * 1000
+        case MPEGLayerII:  frame.BitRate = v2l2_br[bitRateIndex] * 1000
+        case MPEGLayerIII: frame.BitRate = v2l3_br[bitRateIndex] * 1000
         }
     }
 
@@ -260,10 +256,10 @@ func parseHeader(header []byte, frame *Mp3Frame) bool {
     }
 
     // Sampling rate.
-    switch frame.MpegVersion {
-    case MpegVersion1:   frame.SamplingRate = v1_sr[samplingRateIndex]
-    case MpegVersion2:   frame.SamplingRate = v2_sr[samplingRateIndex]
-    case MpegVersion2_5: frame.SamplingRate = v25_sr[samplingRateIndex]
+    switch frame.MPEGVersion {
+    case MPEGVersion1:   frame.SamplingRate = v1_sr[samplingRateIndex]
+    case MPEGVersion2:   frame.SamplingRate = v2_sr[samplingRateIndex]
+    case MPEGVersion2_5: frame.SamplingRate = v25_sr[samplingRateIndex]
     }
 
     // Padding bit. (1 bit.)
@@ -294,17 +290,17 @@ func parseHeader(header []byte, frame *Mp3Frame) bool {
     }
 
     // Number of samples in the frame. We need this to determine the frame size.
-    if frame.MpegVersion == MpegVersion1 {
-        switch frame.MpegLayer {
-        case MpegLayerI:   frame.SampleCount = 384
-        case MpegLayerII:  frame.SampleCount = 1152
-        case MpegLayerIII: frame.SampleCount = 1152
+    if frame.MPEGVersion == MPEGVersion1 {
+        switch frame.MPEGLayer {
+        case MPEGLayerI:   frame.SampleCount = 384
+        case MPEGLayerII:  frame.SampleCount = 1152
+        case MPEGLayerIII: frame.SampleCount = 1152
         }
     } else {
-        switch frame.MpegLayer {
-        case MpegLayerI:   frame.SampleCount = 384
-        case MpegLayerII:  frame.SampleCount = 1152
-        case MpegLayerIII: frame.SampleCount = 576
+        switch frame.MPEGLayer {
+        case MPEGLayerI:   frame.SampleCount = 384
+        case MPEGLayerII:  frame.SampleCount = 1152
+        case MPEGLayerIII: frame.SampleCount = 576
         }
     }
 
@@ -313,7 +309,7 @@ func parseHeader(header []byte, frame *Mp3Frame) bool {
     var padding int = 0
 
     if frame.PaddingBit {
-        if frame.MpegLayer == MpegLayerI {
+        if frame.MPEGLayer == MPEGLayerI {
             padding = 4
         } else {
             padding = 1
@@ -344,8 +340,8 @@ func parseHeader(header []byte, frame *Mp3Frame) bool {
 // of the supplied MP3 frame.
 func getSideInfoSize(frame *Mp3Frame) (size int) {
 
-    if frame.MpegLayer == MpegLayerIII {
-        if frame.MpegVersion == MpegVersion1 {
+    if frame.MPEGLayer == MPEGLayerIII {
+        if frame.MPEGVersion == MPEGVersion1 {
             if frame.ChannelMode == Mono {
                 size = 17
             } else {
