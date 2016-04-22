@@ -14,7 +14,7 @@ import (
 
 
 // Package version number.
-const Version = "0.5.0"
+const Version = "0.6.0"
 
 
 // Flag controlling the display of debugging information.
@@ -63,8 +63,8 @@ var v2_sr  = []int{22050, 24000, 16000}
 var v25_sr = []int{11025, 12000,  8000}
 
 
-// Mp3Frame represents an individual frame parsed from an MP3 stream.
-type Mp3Frame struct {
+// MP3Frame represents an individual frame parsed from an MP3 stream.
+type MP3Frame struct {
     MPEGVersion byte
     MPEGLayer byte
     CrcProtection bool
@@ -98,11 +98,11 @@ type ID3v2Tag struct {
 // NextFrame loads the next MP3 frame from the input stream.
 // Skips over ID3 tags and unrecognised/garbage data in the stream.
 // Returns nil when the stream has been exhausted.
-func NextFrame(stream io.Reader) *Mp3Frame {
+func NextFrame(stream io.Reader) *MP3Frame {
     for {
         obj := NextObject(stream)
         switch obj := obj.(type) {
-        case *Mp3Frame:
+        case *MP3Frame:
             return obj
         case *ID3v1Tag:
             debug("skipping ID3v1 tag")
@@ -180,7 +180,7 @@ func NextObject(stream io.Reader) interface{} {
         // Check for a frame header, indicated by an 11-bit frame-sync sequence.
         if buffer[0] == 0xFF && (buffer[1] & 0xE0) == 0xE0 {
 
-            frame := &Mp3Frame{}
+            frame := &MP3Frame{}
 
             if ok := parseHeader(buffer, frame); ok {
 
@@ -210,8 +210,8 @@ func NextObject(stream io.Reader) interface{} {
 
 // parseHeader attempts to parse a slice of 4 bytes as a valid MP3 header.
 // The return value is a boolean indicating success. If the header is valid
-// its values are written into the supplied Mp3Frame struct.
-func parseHeader(header []byte, frame *Mp3Frame) bool {
+// its values are written into the supplied MP3Frame struct.
+func parseHeader(header []byte, frame *MP3Frame) bool {
 
     // MPEG version. (2 bits)
     frame.MPEGVersion = (header[1] & 0x18) >> 3
@@ -338,7 +338,7 @@ func parseHeader(header []byte, frame *Mp3Frame) bool {
 
 // getSideInfoSize returns the length in bytes of the side information section
 // of the supplied MP3 frame.
-func getSideInfoSize(frame *Mp3Frame) (size int) {
+func getSideInfoSize(frame *MP3Frame) (size int) {
 
     if frame.MPEGLayer == MPEGLayerIII {
         if frame.MPEGVersion == MPEGVersion1 {
@@ -361,7 +361,7 @@ func getSideInfoSize(frame *Mp3Frame) (size int) {
 
 
 // IsXingHeader returns true if the supplied frame is an Xing VBR header.
-func IsXingHeader(frame *Mp3Frame) bool {
+func IsXingHeader(frame *MP3Frame) bool {
 
     // The Xing header begins directly after the side information block.
     // We also need to allow 4 bytes for the frame header.
@@ -377,7 +377,7 @@ func IsXingHeader(frame *Mp3Frame) bool {
 
 
 // IsVbriHeader returns true if the supplied frame is a Fraunhofer VBRI header.
-func IsVbriHeader(frame *Mp3Frame) bool {
+func IsVbriHeader(frame *MP3Frame) bool {
 
     // The VBRI header begins after a fixed 32-byte offset.
     // We also need to allow 4 bytes for the frame header.
@@ -393,7 +393,7 @@ func IsVbriHeader(frame *Mp3Frame) bool {
 
 // NewXingHeader creates an Xing VBR header frame. Frame attributes are copied from
 // the supplied template frame.
-func NewXingHeader(template *Mp3Frame, totalFrames, totalBytes uint32) *Mp3Frame {
+func NewXingHeader(template *MP3Frame, totalFrames, totalBytes uint32) *MP3Frame {
 
     // Make a shallow copy of the template frame.
     xingFrame := *template
