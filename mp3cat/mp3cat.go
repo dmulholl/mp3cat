@@ -1,6 +1,6 @@
-/*
-    Command line utility for concatenating MP3 files without re-encoding.
-*/
+//
+// A fast command line utility for concatenating MP3 files without re-encoding.
+//
 package main
 
 
@@ -96,8 +96,8 @@ func mergeFiles(outputPath string, inputPaths []string, overwrite bool, verbose 
         }
     }
 
-    // If the list of input files includes the output file we'll end up
-    // in an infinite loop.
+    // If the list of input files includes the output file we'll end up in an
+    // infinite loop.
     for _, filepath := range inputPaths {
         if filepath == outputPath {
             fmt.Fprintln(os.Stderr, "Error: the list of input files includes the output file.")
@@ -112,8 +112,7 @@ func mergeFiles(outputPath string, inputPaths []string, overwrite bool, verbose 
         os.Exit(1)
     }
 
-    // Loop over the input files and append their MP3 frames to the
-    // output file.
+    // Loop over the input files and append their MP3 frames to the output file.
     for _, filepath := range inputPaths {
 
         if verbose {
@@ -144,8 +143,8 @@ func mergeFiles(outputPath string, inputPaths []string, overwrite bool, verbose 
                 }
             }
 
-            // If we detect more than one bitrate we'll need to add
-            // a VBR header to the output file.
+            // If we detect more than one bitrate we'll need to add a VBR
+            // header to the output file.
             if firstBitRate == 0 {
                 firstBitRate = frame.BitRate
             } else if frame.BitRate != firstBitRate {

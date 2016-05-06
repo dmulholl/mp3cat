@@ -1,6 +1,6 @@
-/*
-    Package mp3lib provides basic functionality for parsing MP3 files.
-*/
+//
+// Package mp3lib provides basic functionality for parsing MP3 files.
+//
 package mp3lib
 
 
@@ -363,8 +363,8 @@ func getSideInfoSize(frame *MP3Frame) (size int) {
 // IsXingHeader returns true if the supplied frame is an Xing VBR header.
 func IsXingHeader(frame *MP3Frame) bool {
 
-    // The Xing header begins directly after the side information block.
-    // We also need to allow 4 bytes for the frame header.
+    // The Xing header begins directly after the side information block. We
+    // also need to allow 4 bytes for the frame header.
     offset := 4 + getSideInfoSize(frame)
     id := frame.RawBytes[offset:offset + 4]
 
@@ -379,8 +379,8 @@ func IsXingHeader(frame *MP3Frame) bool {
 // IsVbriHeader returns true if the supplied frame is a Fraunhofer VBRI header.
 func IsVbriHeader(frame *MP3Frame) bool {
 
-    // The VBRI header begins after a fixed 32-byte offset.
-    // We also need to allow 4 bytes for the frame header.
+    // The VBRI header begins after a fixed 32-byte offset. We also need to
+    // allow 4 bytes for the frame header.
     id := frame.RawBytes[36:36 + 4]
 
     if bytes.Equal(id, []byte("VBRI")) {
@@ -410,8 +410,8 @@ func NewXingHeader(template *MP3Frame, totalFrames, totalBytes uint32) *MP3Frame
     // Write the Xing header ID.
     copy(xingFrame.RawBytes[offset:offset + 4], []byte("Xing"))
 
-    // Write a flag indicating that the number-of-frames
-    // and number-of-bytes fields are present.
+    // Write a flag indicating that the number-of-frames and number-of-bytes
+    // fields are present.
     xingFrame.RawBytes[offset + 7] = 3
 
     // Write the number of frames as a 32-bit big endian integer.
