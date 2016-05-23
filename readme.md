@@ -31,7 +31,7 @@ Example:
 
 ## Installation
 
-MP3Cat is written in Go. If you have Go installed you can run:
+MP3Cat is written in Go. If you have a Go development environment installed you can run:
 
     $ go get github.com/dmulholland/mp3cat/mp3cat
 
