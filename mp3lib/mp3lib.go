@@ -1,6 +1,6 @@
-//
-// Package mp3lib provides basic functionality for parsing MP3 files.
-//
+/*
+    Package mp3lib provides basic functionality for parsing MP3 files.
+*/
 package mp3lib
 
 
