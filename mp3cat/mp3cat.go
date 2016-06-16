@@ -1,6 +1,7 @@
 /*
-    MP3Cat: a fast command line utility for concatenating MP3 files without
-    re-encoding. Supports both CBR and VBR files.
+    MP3Cat is a simple command line utility for concatenating MP3 files
+    without re-encoding. It supports both constant bit rate (CBR) and variable
+    bit rate (VBR) files.
 */
 package main
 
