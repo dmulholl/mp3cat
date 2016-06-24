@@ -1,7 +1,7 @@
 /*
     MP3Cat is a simple command line utility for concatenating MP3 files
-    without re-encoding. It supports both constant bit rate (CBR) and variable
-    bit rate (VBR) files.
+    without re-encoding. It supports both constant bit rate (CBR) and
+    variable bit rate (VBR) files.
 */
 package main
 
@@ -11,13 +11,13 @@ import (
     "io"
     "os"
     "path/filepath"
-    "github.com/dmulholland/mp3cat/mp3lib"
+    "github.com/dmulholland/mp3lib"
     "github.com/dmulholland/clio/go/clio"
 )
 
 
 // Application version number.
-const version = "2.1.1"
+const version = "2.2.0"
 
 
 // Command line help text.
