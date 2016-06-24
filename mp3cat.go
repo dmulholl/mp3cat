@@ -1,5 +1,5 @@
 /*
-    MP3Cat is a simple command line utility for concatenating MP3 files
+    MP3Cat is a fast command line utility for concatenating MP3 files
     without re-encoding. It supports both constant bit rate (CBR) and
     variable bit rate (VBR) files.
 */
@@ -49,12 +49,12 @@ func main() {
     parser := clio.NewParser(helptext, version)
 
     // Register flags.
-    parser.AddFlag("force", 'f')
-    parser.AddFlag("verbose", 'v')
-    parser.AddFlag("debug")
+    parser.AddFlag("force f")
+    parser.AddFlag("verbose v")
+    parser.AddFlag("debug d")
 
     // Register options.
-    parser.AddStrOpt("out", "output.mp3", 'o')
+    parser.AddStr("out o", "output.mp3")
 
     // Parse the command line arguments.
     parser.Parse()
@@ -72,7 +72,7 @@ func main() {
 
     // Merge the input files.
     mergeFiles(
-        parser.GetStrOpt("out"),
+        parser.GetStr("out"),
         parser.GetArgs(),
         parser.GetFlag("force"),
         parser.GetFlag("verbose"))
@@ -81,7 +81,7 @@ func main() {
 
 // Create a new file at the specified output path containing the merged
 // contents of the list of input files.
-func mergeFiles(outputPath string, inputPaths []string, overwrite bool, verbose bool) {
+func mergeFiles(outputPath string, inputPaths []string, force, verbose bool) {
 
     var totalFrames uint32
     var totalBytes uint32
@@ -91,7 +91,7 @@ func mergeFiles(outputPath string, inputPaths []string, overwrite bool, verbose 
 
     // Only overwrite an existing file if the --force flag has been used.
     if _, err := os.Stat(outputPath); err == nil {
-        if !overwrite {
+        if !force {
             fmt.Fprintf(os.Stderr, "Error: the file '%v' already exists. ", outputPath)
             fmt.Fprintf(os.Stderr, "Use --force to overwrite it.\n")
             os.Exit(1)
