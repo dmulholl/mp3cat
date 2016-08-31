@@ -17,7 +17,7 @@ import (
 
 
 // Application version number.
-const version = "2.2.0"
+const version = "2.2.1"
 
 
 // Command line help text.
@@ -61,7 +61,9 @@ func main() {
 
     // Make sure we have a list of input files.
     if !parser.HasArgs() {
-        fmt.Fprintln(os.Stderr, "Error: you must supply a list of files to merge.")
+        fmt.Fprintln(
+            os.Stderr,
+            "Error: you must supply a list of files to merge.")
         os.Exit(1)
     }
 
@@ -92,8 +94,9 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool) {
     // Only overwrite an existing file if the --force flag has been used.
     if _, err := os.Stat(outputPath); err == nil {
         if !force {
-            fmt.Fprintf(os.Stderr, "Error: the file '%v' already exists. ", outputPath)
-            fmt.Fprintf(os.Stderr, "Use --force to overwrite it.\n")
+            fmt.Fprintf(
+                os.Stderr,
+                "Error: the file '%v' already exists.\n", outputPath)
             os.Exit(1)
         }
     }
@@ -102,7 +105,9 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool) {
     // infinite loop.
     for _, filepath := range inputPaths {
         if filepath == outputPath {
-            fmt.Fprintln(os.Stderr, "Error: the list of input files includes the output file.")
+            fmt.Fprintln(
+                os.Stderr,
+                "Error: the list of input files includes the output file.")
             os.Exit(1)
         }
     }
