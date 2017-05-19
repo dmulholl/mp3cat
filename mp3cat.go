@@ -35,9 +35,9 @@ Options:
   -o, --out <file>  Output filename. Defaults to 'output.mp3'.
 
 Flags:
-  -i, --id3         Copy ID3 tags from the first file.
   -f, --force       Overwrite an existing output file.
       --help        Display this help text and exit.
+  -i, --id3         Copy ID3 tags from the first file.
   -v, --verbose     Report progress.
       --version     Display the application's version number and exit.
 `, filepath.Base(os.Args[0]))
@@ -119,6 +119,8 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool, add
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	
+	title, artist, album, year, genre, sets, comments /*, image*/ := getId3Info(inputPaths[0])
 
 	// Loop over the input files and append their MP3 frames to the output file.
 	for _, filepath := range inputPaths {
@@ -183,40 +185,10 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool, add
 		}
 		addXingHeader(outputPath, totalFrames, totalBytes)
 	}
-
-	title, artist, album, year, genre, sets, comments /*, image*/ := getId3Info(inputPaths[0])
-
+	
 	if addId3 {
-		mp3File, err := id3.Open(outputPath)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		defer mp3File.Close()
-		mp3File.SetTitle(title)
-		mp3File.SetArtist(artist)
-		mp3File.SetAlbum(album)
-		mp3File.SetYear(year)
-		mp3File.SetGenre(genre)
-
-		if sets != "" {
-			TPOS := v2.NewTextFrame(v2.V23FrameTypeMap["TPOS"], sets)
-			mp3File.AddFrames(TPOS)
-		}
-
-		TRCK := v2.NewTextFrame(v2.V23FrameTypeMap["TRCK"], "1/1")
-		mp3File.AddFrames(TRCK)
-
-		if comments != nil {
-			COMM := v2.NewUnsynchTextFrame(v2.V23FrameTypeMap["COM"], "Comments", strings.Join(comments, ""))
-			mp3File.AddFrames(COMM)
-		}
-
-		/* This code isn't present and I coundn't find any workarounds using NewDataFrame to ge tit to work.  I even tried editing the code in github.com/dmulholland/mp3lib/v2/frame.go without much luck.
-		if image != nil {
-			APIC := v2.NewImageFrame(v2.V23FrameTypeMap["APIC"], image)
-			mp3File.AddFrames(APIC)
-		}*/
+		fileCount += 1
+		writeId3Info(outputPath, title, artist, album, year, genre, sets, strconv.Itoa(fileCount)+"/"+strconv.Itoa(fileCount), comments)
 	}
 
 	if verbose {
@@ -228,7 +200,8 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool, add
 			fmt.Printf("\t TYER=%v\n", year)
 			fmt.Printf("\t TCON=%v\n", genre)
 			fmt.Printf("\t TPOS=%v\n", sets)
-			fmt.Printf("\t TRCK=%v\n", "1/1")
+			//fmt.Printf("\t TCOMM=%v\n", comments)
+			fmt.Printf("\t TRCK=%v\n", strconv.Itoa(fileCount)+"/"+strconv.Itoa(fileCount))
 			//fmt.Printf("\t APIC=%v\n", len(image.Bytes()))
 		}
 	}
@@ -268,6 +241,41 @@ func getId3Info(filepath string) (title string, artist string, album string, yea
 	}*/
 
 	return
+}
+
+func writeId3Info(outputPath string, title string, artist string, album string, year string, genre string, sets string, track string, comments []string) {
+	mp3File, err := id3.Open(outputPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	defer mp3File.Close()
+
+	mp3File.SetTitle(title)
+	mp3File.SetArtist(artist)
+	mp3File.SetAlbum(album)
+	mp3File.SetYear(year)
+	mp3File.SetGenre(genre)
+
+	if sets != "" {
+		TPOS := v2.NewTextFrame(v2.V23FrameTypeMap["TPOS"], sets)
+		mp3File.AddFrames(TPOS)
+	}
+
+	TRCK := v2.NewTextFrame(v2.V23FrameTypeMap["TRCK"], track)
+	mp3File.AddFrames(TRCK)
+
+	/* Comment also doesn't seam to copy correctly.
+	if comments != nil {
+		COMM := v2.NewUnsynchTextFrame(v2.V23FrameTypeMap["COMM"], "Comments", strings.Join(comments, ""))
+		mp3File.AddFrames(COMM)
+	}*/
+
+	/* This code isn't present and I coundn't find any workarounds using NewDataFrame to ge tit to work.  I even tried editing the code in github.com/dmulholland/mp3lib/v2/frame.go without much luck.
+	if image != nil {
+		APIC := v2.NewImageFrame(v2.V23FrameTypeMap["APIC"], image)
+		mp3File.AddFrames(APIC)
+	}*/
 }
 
 // Prepend an Xing VBR header to the specified MP3 file.
