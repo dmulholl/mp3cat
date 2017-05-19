@@ -14,11 +14,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
 // Application version number.
-const version = "2.3.0"
+const version = "2.4."
 
 // Command line help text.
 var helptext = fmt.Sprintf(`
@@ -38,6 +39,7 @@ Flags:
   -f, --force       Overwrite an existing output file.
       --help        Display this help text and exit.
   -i, --id3         Copy ID3 tags from the first file.
+  -s, --split M     Split after files after M minutes.
   -v, --verbose     Report progress.
       --version     Display the application's version number and exit.
 `, filepath.Base(os.Args[0]))
@@ -56,6 +58,7 @@ func main() {
 
 	// Register options.
 	parser.AddStr("out o", "output.mp3")
+	parser.AddInt("split s", 0)
 
 	// Parse the command line arguments.
 	parser.Parse()
@@ -79,12 +82,14 @@ func main() {
 		parser.GetArgs(),
 		parser.GetFlag("force"),
 		parser.GetFlag("verbose"),
-		parser.GetFlag("id3"))
+		parser.GetFlag("id3"),
+		parser.GetInt("split"),
+	)
 }
 
 // Create a new file at the specified output path containing the merged
 // contents of the list of input files.
-func mergeFiles(outputPath string, inputPaths []string, force, verbose bool, addId3 bool) {
+func mergeFiles(outputPath string, inputPaths []string, force, verbose bool, addId3 bool, split int) {
 
 	var totalFrames uint32
 	var totalBytes uint32
@@ -119,7 +124,11 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool, add
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	
+
+	firstOutputPath := outputPath
+	lengthMs := float32(0)
+	fileCount := 0
+
 	title, artist, album, year, genre, sets, comments /*, image*/ := getId3Info(inputPaths[0])
 
 	// Loop over the input files and append their MP3 frames to the output file.
@@ -168,12 +177,50 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool, add
 				os.Exit(1)
 			}
 
+			// Calculate frame length in ms
+			lengthMs += (1000 * float32(frame.SampleCount)) / float32(frame.SamplingRate)
 			totalFrames += 1
 			totalBytes += uint32(len(frame.RawBytes))
+
 		}
 
 		inputFile.Close()
 		totalFiles += 1
+
+		if split > 0 && int(lengthMs/1000) > split && totalFiles < len(inputPaths) {
+			fileCount += 1
+			if verbose {
+				fmt.Printf("Splitting after %v seconds, starting file #%v.\n", int(lengthMs/1000), fileCount)
+			}
+			lengthMs = 0
+
+			// Close output file
+			outputFile.Close()
+
+			// If we detected multiple bitrates, prepend a VBR header to the file.
+			if isVBR {
+				if verbose {
+					fmt.Println("VBR data detected. Adding Xing header.")
+				}
+				addXingHeader(outputPath, totalFrames, totalBytes)
+			}
+
+			if addId3 {
+				writeId3Info(outputPath, title, artist, album, year, genre, sets, strconv.Itoa(fileCount)+"/"+strconv.Itoa(fileCount), comments)
+			}
+
+			outputPath = strings.Replace(firstOutputPath, ".mp3", " "+strconv.Itoa(fileCount)+".mp3", 1)
+			totalFrames = 0
+			totalBytes = 0
+			firstBitRate = 0
+
+			// Create subsequent output file.
+			outputFile, err = os.Create(outputPath)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		}
 	}
 
 	outputFile.Close()
@@ -185,7 +232,7 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool, add
 		}
 		addXingHeader(outputPath, totalFrames, totalBytes)
 	}
-	
+
 	if addId3 {
 		fileCount += 1
 		writeId3Info(outputPath, title, artist, album, year, genre, sets, strconv.Itoa(fileCount)+"/"+strconv.Itoa(fileCount), comments)
