@@ -11,13 +11,14 @@ import (
     "io"
     "os"
     "path/filepath"
+    "golang.org/x/crypto/ssh/terminal"
     "github.com/dmulholland/mp3lib"
     "github.com/dmulholland/clio/go/clio"
 )
 
 
 // Application version number.
-const version = "2.2.1"
+const version = "2.3.0"
 
 
 // Command line help text.
@@ -37,6 +38,7 @@ Options:
 Flags:
   -f, --force       Overwrite an existing output file.
       --help        Display this help text and exit.
+  -t, --tag         Copy the ID3 tag from the first input file.
   -v, --verbose     Report progress.
       --version     Display the application's version number and exit.
 `, filepath.Base(os.Args[0]))
@@ -52,6 +54,7 @@ func main() {
     parser.AddFlag("force f")
     parser.AddFlag("verbose v")
     parser.AddFlag("debug d")
+    parser.AddFlag("tag t")
 
     // Register options.
     parser.AddStr("out o", "output.mp3")
@@ -73,17 +76,18 @@ func main() {
     }
 
     // Merge the input files.
-    mergeFiles(
+    merge(
         parser.GetStr("out"),
         parser.GetArgs(),
         parser.GetFlag("force"),
-        parser.GetFlag("verbose"))
+        parser.GetFlag("verbose"),
+        parser.GetFlag("tag"))
 }
 
 
 // Create a new file at the specified output path containing the merged
 // contents of the list of input files.
-func mergeFiles(outputPath string, inputPaths []string, force, verbose bool) {
+func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
 
     var totalFrames uint32
     var totalBytes uint32
@@ -119,12 +123,17 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool) {
         os.Exit(1)
     }
 
+    // Print a line of dashes if we're running in a terminal.
+    if verbose {
+        dashes()
+    }
+
     // Loop over the input files and append their MP3 frames to the output
     // file.
     for _, filepath := range inputPaths {
 
         if verbose {
-            fmt.Println("Merging:", filepath)
+            fmt.Println("+", filepath)
         }
 
         inputFile, err := os.Open(filepath)
@@ -175,17 +184,32 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool) {
     }
 
     outputFile.Close()
+    if verbose {
+        dashes()
+    }
 
     // If we detected multiple bitrates, prepend a VBR header to the file.
     if isVBR {
         if verbose {
-            fmt.Println("VBR data detected. Adding Xing header.")
+            fmt.Println(": Multiple bitrates detected. Adding VBR header.")
         }
         addXingHeader(outputPath, totalFrames, totalBytes)
     }
 
+    // Copy the ID3v2 tag from the first input file if requested. Order of
+    // operations is important here. The ID3 tag must be the first item in
+    // the file - in particular, it must come *before* any VBR header.
+    if tag {
+        if verbose {
+            fmt.Println(": Adding ID3 tag.")
+        }
+        addID3v2Tag(outputPath, inputPaths[0])
+    }
+
+    // Print a count of the number of files merged.
     if verbose {
-        fmt.Printf("%v files merged.\n", totalFiles)
+        fmt.Printf(": %v files merged.\n", totalFiles)
+        dashes()
     }
 }
 
@@ -235,5 +259,74 @@ func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
     if err != nil {
         fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
+    }
+}
+
+
+// Prepend an ID3v2 tag to the MP3 file at mp3Path, copying from tagPath.
+func addID3v2Tag(mp3Path, tagPath string) {
+
+    tagFile, err := os.Open(tagPath)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err)
+        os.Exit(1)
+    }
+
+    id3tag := mp3lib.NextID3v2Tag(tagFile)
+    tagFile.Close()
+
+    if id3tag != nil {
+        outputFile, err := os.Create(mp3Path + ".mp3cat.tmp")
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        inputFile, err := os.Open(mp3Path)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        _, err = outputFile.Write(id3tag.RawBytes)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        _, err = io.Copy(outputFile, inputFile)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        outputFile.Close()
+        inputFile.Close()
+
+        err = os.Remove(mp3Path)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+
+        err = os.Rename(mp3Path + ".mp3cat.tmp", mp3Path)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+    }
+}
+
+
+// Print a line of dashes to stdout if we're running in a terminal.
+func dashes() {
+    if terminal.IsTerminal(int(os.Stdout.Fd())) {
+        width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+        if err == nil {
+            for i := 0; i < width; i++ {
+                fmt.Print("-")
+            }
+            fmt.Println()
+        }
     }
 }
