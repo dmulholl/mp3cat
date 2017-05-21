@@ -119,7 +119,8 @@ func mergeFiles(outputPath string, inputPaths []string, force, verbose bool) {
         os.Exit(1)
     }
 
-    // Loop over the input files and append their MP3 frames to the output file.
+    // Loop over the input files and append their MP3 frames to the output
+    // file.
     for _, filepath := range inputPaths {
 
         if verbose {
