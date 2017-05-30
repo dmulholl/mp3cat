@@ -123,9 +123,9 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
         os.Exit(1)
     }
 
-    // Print a line of dashes if we're running in a terminal.
+    // Print a line of line if we're running in a terminal.
     if verbose {
-        dashes()
+        line()
     }
 
     // Loop over the input files and append their MP3 frames to the output
@@ -185,13 +185,13 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
 
     outputFile.Close()
     if verbose {
-        dashes()
+        line()
     }
 
     // If we detected multiple bitrates, prepend a VBR header to the file.
     if isVBR {
         if verbose {
-            fmt.Println(": Multiple bitrates detected. Adding VBR header.")
+            fmt.Println("• Multiple bitrates detected. Adding VBR header.")
         }
         addXingHeader(outputPath, totalFrames, totalBytes)
     }
@@ -201,15 +201,15 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
     // the file - in particular, it must come *before* any VBR header.
     if tag {
         if verbose {
-            fmt.Println(": Adding ID3 tag.")
+            fmt.Println("• Adding ID3 tag.")
         }
         addID3v2Tag(outputPath, inputPaths[0])
     }
 
     // Print a count of the number of files merged.
     if verbose {
-        fmt.Printf(": %v files merged.\n", totalFiles)
-        dashes()
+        fmt.Printf("• %v files merged.\n", totalFiles)
+        line()
     }
 }
 
@@ -318,13 +318,13 @@ func addID3v2Tag(mp3Path, tagPath string) {
 }
 
 
-// Print a line of dashes to stdout if we're running in a terminal.
-func dashes() {
+// Print a line to stdout if we're running in a terminal.
+func line() {
     if terminal.IsTerminal(int(os.Stdout.Fd())) {
         width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
         if err == nil {
             for i := 0; i < width; i++ {
-                fmt.Print("-")
+                fmt.Print("─")
             }
             fmt.Println()
         }
