@@ -17,11 +17,9 @@ import (
 )
 
 
-// Application version number.
-const version = "2.4.0"
+const version = "2.4.1"
 
 
-// Command line help text.
 var helptext = fmt.Sprintf(`
 Usage: %s [FLAGS] [OPTIONS] ARGUMENTS
 
@@ -44,25 +42,18 @@ Flags:
 `, filepath.Base(os.Args[0]))
 
 
-// Application entry point.
 func main() {
 
-    // Initialize an argument parser.
+    // Parse the command line arguments.
     parser := clio.NewParser(helptext, version)
-
-    // Register flags.
     parser.AddFlag("force f")
     parser.AddFlag("verbose v")
     parser.AddFlag("debug d")
     parser.AddFlag("tag t")
-
-    // Register options.
     parser.AddStr("out o", "output.mp3")
-
-    // Parse the command line arguments.
     parser.Parse()
 
-    // Make sure we have a list of input files.
+    // Make sure the user has supplied a list of input files.
     if !parser.HasArgs() {
         fmt.Fprintln(
             os.Stderr,
@@ -87,7 +78,7 @@ func main() {
 
 // Create a new file at the specified output path containing the merged
 // contents of the list of input files.
-func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
+func merge(outpath string, inpaths []string, force, verbose, tag bool) {
 
     var totalFrames uint32
     var totalBytes uint32
@@ -96,19 +87,19 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
     var isVBR bool
 
     // Only overwrite an existing file if the --force flag has been used.
-    if _, err := os.Stat(outputPath); err == nil {
+    if _, err := os.Stat(outpath); err == nil {
         if !force {
             fmt.Fprintf(
                 os.Stderr,
-                "Error: the file '%v' already exists.\n", outputPath)
+                "Error: the file '%v' already exists.\n", outpath)
             os.Exit(1)
         }
     }
 
     // If the list of input files includes the output file we'll end up in an
     // infinite loop.
-    for _, filepath := range inputPaths {
-        if filepath == outputPath {
+    for _, filepath := range inpaths {
+        if filepath == outpath {
             fmt.Fprintln(
                 os.Stderr,
                 "Error: the list of input files includes the output file.")
@@ -117,26 +108,25 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
     }
 
     // Create the output file.
-    outputFile, err := os.Create(outputPath)
+    outfile, err := os.Create(outpath)
     if err != nil {
         fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
 
-    // Print a line of line if we're running in a terminal.
     if verbose {
         line()
     }
 
     // Loop over the input files and append their MP3 frames to the output
     // file.
-    for _, filepath := range inputPaths {
+    for _, inpath := range inpaths {
 
         if verbose {
-            fmt.Println("+", filepath)
+            fmt.Println("+", inpath)
         }
 
-        inputFile, err := os.Open(filepath)
+        infile, err := os.Open(inpath)
         if err != nil {
             fmt.Fprintln(os.Stderr, err)
             os.Exit(1)
@@ -147,7 +137,7 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
         for {
 
             // Read the next frame from the input file.
-            frame := mp3lib.NextFrame(inputFile)
+            frame := mp3lib.NextFrame(infile)
             if frame == nil {
                 break
             }
@@ -169,7 +159,7 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
             }
 
             // Write the frame to the output file.
-            _, err := outputFile.Write(frame.RawBytes)
+            _, err := outfile.Write(frame.RawBytes)
             if err != nil {
                 fmt.Fprintln(os.Stderr, err)
                 os.Exit(1)
@@ -179,11 +169,11 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
             totalBytes += uint32(len(frame.RawBytes))
         }
 
-        inputFile.Close()
+        infile.Close()
         totalFiles += 1
     }
 
-    outputFile.Close()
+    outfile.Close()
     if verbose {
         line()
     }
@@ -193,7 +183,7 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
         if verbose {
             fmt.Println("• Multiple bitrates detected. Adding VBR header.")
         }
-        addXingHeader(outputPath, totalFrames, totalBytes)
+        addXingHeader(outpath, totalFrames, totalBytes)
     }
 
     // Copy the ID3v2 tag from the first input file if requested. Order of
@@ -203,7 +193,7 @@ func merge(outputPath string, inputPaths []string, force, verbose, tag bool) {
         if verbose {
             fmt.Println("• Adding ID3 tag.")
         }
-        addID3v2Tag(outputPath, inputPaths[0])
+        addID3v2Tag(outpath, inpaths[0])
     }
 
     // Print a count of the number of files merged.
