@@ -1,7 +1,7 @@
 /*
-   MP3Cat is a fast command line utility for concatenating MP3 files
-   without re-encoding. It supports both constant bit rate (CBR) and
-   variable bit rate (VBR) files.
+MP3Cat is a fast command line utility for concatenating MP3 files
+without re-encoding. It supports both constant bit rate (CBR) and
+variable bit rate (VBR) files.
 */
 package main
 
@@ -177,12 +177,12 @@ func merge(outpath string, inpaths []string, force, verbose, tag bool) {
 				os.Exit(1)
 			}
 
-			totalFrames += 1
+			totalFrames++
 			totalBytes += uint32(len(frame.RawBytes))
 		}
 
 		infile.Close()
-		totalFiles += 1
+		totalFiles++
 	}
 
 	outfile.Close()
