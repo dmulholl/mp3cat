@@ -36,6 +36,7 @@ Flags:
   -D, --dir         Directory containing files to merge
   -f, --force       Overwrite an existing output file.
       --help        Display this help text and exit.
+  -i  --interlace   Interlace an mp3 file inbetween each input file.
   -t, --tag         Copy the ID3 tag from the first input file.
   -v, --verbose     Report progress.
       --version     Display the application's version number and exit.
@@ -49,6 +50,7 @@ func main() {
 	parser.AddFlag("verbose v")
 	parser.AddFlag("debug d")
 	parser.AddStr("dir D", "")
+	parser.AddStr("interlace i", "")
 	parser.AddFlag("tag t")
 	parser.AddStr("out o", "output.mp3")
 	parser.Parse()
@@ -71,6 +73,11 @@ func main() {
 
 	} else {
 		files = parser.GetArgs()
+	}
+
+	// Interlace file
+	if parser.GetStr("interlace") != "" {
+		files = interlace(files, parser.GetStr("interlace"))
 	}
 
 	// Set debug mode if the user supplied a --debug flag.
@@ -333,4 +340,13 @@ func line() {
 func getFilenames(dir string) []string {
 	files, _ := filepath.Glob(path.Join(dir, "*.mp3"))
 	return files
+}
+
+func interlace(files []string, delimiter string) []string {
+	var newFiles []string
+	for _, f := range files {
+		newFiles = append(newFiles, f)
+		newFiles = append(newFiles, delimiter)
+	}
+	return newFiles[:len(newFiles)-1]
 }
