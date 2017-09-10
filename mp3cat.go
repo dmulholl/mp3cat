@@ -25,14 +25,13 @@ var helptext = fmt.Sprintf(`
 Usage: %s [FLAGS] [OPTIONS] [ARGUMENTS]
 
   This tool concatenates MP3 files without re-encoding. It supports both
-  constant bit rate (CBR) and variable bit rate (VBR) MP3 files. It also
-  strips ID3 tags and garbage data from the output.
+  constant bit rate (CBR) and variable bit rate (VBR) MP3 files.
 
   Files to be merged can be specified as a list of filenames:
 
     $ mp3cat one.mp3 two.mp3 three.mp3
 
-  Alternatively, an entire directory of files can be merged:
+  Alternatively, an entire directory of .mp3 files can be merged:
 
     $ mp3cat --dir /path/to/directory/
 
