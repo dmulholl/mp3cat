@@ -64,7 +64,7 @@ func main() {
     parser.AddStr("dir d", "")
     parser.Parse()
 
-    // Make sure we have files to merge.
+    // Make sure we have a list of files to merge.
     var files []string
     if parser.GetStr("dir") != "" {
         globs, err := filepath.Glob(path.Join(parser.GetStr("dir"), "*.mp3"))
@@ -84,6 +84,9 @@ func main() {
         os.Exit(1)
     }
 
+    // Make sure the files exist.
+    validateFiles(files)
+
     // Set debug mode if the user supplied a --debug flag.
     if parser.GetFlag("debug") {
         mp3lib.DebugMode = true
@@ -96,6 +99,19 @@ func main() {
         parser.GetFlag("force"),
         parser.GetFlag("verbose"),
         parser.GetFlag("tag"))
+}
+
+
+// Check that the specified files exist.
+func validateFiles(files []string) {
+    for _, file := range files {
+        if _, err := os.Stat(file); err != nil {
+            fmt.Fprintf(
+                os.Stderr,
+                "Error: the file '%v' does not exist.\n", file)
+            os.Exit(1)
+        }
+    }
 }
 
 
