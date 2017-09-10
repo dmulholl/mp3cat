@@ -36,7 +36,7 @@ Usage: %s [FLAGS] [OPTIONS] [ARGUMENTS]
     $ mp3cat --dir /path/to/directory/
 
 Arguments:
-  [files]                 List of input files to merge.
+  [files]                 List of files to merge.
 
 Options:
   -d, --dir <path>        Directory of files to merge.

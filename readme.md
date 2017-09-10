@@ -12,7 +12,7 @@ MP3Cat is a fast command-line utility for merging MP3 files without re-encoding.
       garbage data from the output.
 
     Arguments:
-      [files]                 List of input files to merge.
+      [files]                 List of files to merge.
 
     Options:
       -d, --dir <path>        Directory of files to merge.
