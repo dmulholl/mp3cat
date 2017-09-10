@@ -10,6 +10,7 @@ import (
     "fmt"
     "io"
     "os"
+    "path"
     "path/filepath"
     "golang.org/x/crypto/ssh/terminal"
     "github.com/dmulholland/mp3lib"
@@ -17,28 +18,37 @@ import (
 )
 
 
-const version = "2.4.1"
+const version = "2.5.0.dev"
 
 
 var helptext = fmt.Sprintf(`
-Usage: %s [FLAGS] [OPTIONS] ARGUMENTS
+Usage: %s [FLAGS] [OPTIONS] [ARGUMENTS]
 
-  Concatenates MP3 files without re-encoding. Supports both constant bit rate
-  (CBR) and variable bit rate (VBR) files. Strips ID3 tags and garbage data
-  from the output.
+  This tool concatenates MP3 files without re-encoding. It supports both
+  constant bit rate (CBR) and variable bit rate (VBR) MP3 files. It also
+  strips ID3 tags and garbage data from the output.
+
+  Files to be merged can be specified as a list of filenames:
+
+    $ mp3cat one.mp3 two.mp3 three.mp3
+
+  Alternatively, an entire directory of files can be merged:
+
+    $ mp3cat --dir /path/to/directory/
 
 Arguments:
-  <files>           List of input files to merge.
+  [files]             List of input files to merge.
 
 Options:
-  -o, --out <file>  Output filename. Defaults to 'output.mp3'.
+  -d, --dir <path>    Directory of files to merge.
+  -o, --out <path>    Output filename. Defaults to 'output.mp3'.
 
 Flags:
-  -f, --force       Overwrite an existing output file.
-      --help        Display this help text and exit.
-  -t, --tag         Copy the ID3 tag from the first input file.
-  -v, --verbose     Report progress.
-      --version     Display the application's version number and exit.
+  -f, --force         Overwrite an existing output file.
+      --help          Display this help text and exit.
+  -t, --tag           Copy the ID3 tag from the first input file.
+  -v, --verbose       Report progress.
+      --version       Display the application's version number and exit.
 `, filepath.Base(os.Args[0]))
 
 
@@ -48,16 +58,29 @@ func main() {
     parser := clio.NewParser(helptext, version)
     parser.AddFlag("force f")
     parser.AddFlag("verbose v")
-    parser.AddFlag("debug d")
+    parser.AddFlag("debug")
     parser.AddFlag("tag t")
     parser.AddStr("out o", "output.mp3")
+    parser.AddStr("dir d", "")
     parser.Parse()
 
-    // Make sure the user has supplied a list of input files.
-    if !parser.HasArgs() {
-        fmt.Fprintln(
-            os.Stderr,
-            "Error: you must supply a list of files to merge.")
+    // Make sure we have files to merge.
+    var files []string
+    if parser.GetStr("dir") != "" {
+        globs, err := filepath.Glob(path.Join(parser.GetStr("dir"), "*.mp3"))
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+        if globs == nil || len(globs) == 0 {
+            fmt.Fprintln(os.Stderr, "Error: no files found.")
+            os.Exit(1)
+        }
+        files = globs
+    } else if parser.HasArgs() {
+        files = parser.GetArgs()
+    } else {
+        fmt.Fprintln(os.Stderr, "Error: you must specify files to merge.")
         os.Exit(1)
     }
 
@@ -69,7 +92,7 @@ func main() {
     // Merge the input files.
     merge(
         parser.GetStr("out"),
-        parser.GetArgs(),
+        files,
         parser.GetFlag("force"),
         parser.GetFlag("verbose"),
         parser.GetFlag("tag"))
