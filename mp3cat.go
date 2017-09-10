@@ -37,18 +37,19 @@ Usage: %s [FLAGS] [OPTIONS] [ARGUMENTS]
     $ mp3cat --dir /path/to/directory/
 
 Arguments:
-  [files]             List of input files to merge.
+  [files]                 List of input files to merge.
 
 Options:
-  -d, --dir <path>    Directory of files to merge.
-  -o, --out <path>    Output filename. Defaults to 'output.mp3'.
+  -d, --dir <path>        Directory of files to merge.
+  -i, --interlace <path>  Interlace a spacer file between each input file.
+  -o, --out <path>        Output filename. Defaults to 'output.mp3'.
 
 Flags:
-  -f, --force         Overwrite an existing output file.
-      --help          Display this help text and exit.
-  -t, --tag           Copy the ID3 tag from the first input file.
-  -v, --verbose       Report progress.
-      --version       Display the application's version number and exit.
+  -f, --force             Overwrite an existing output file.
+      --help              Display this help text and exit.
+  -t, --tag               Copy the ID3 tag from the first input file.
+  -v, --verbose           Report progress.
+      --version           Display the application's version number and exit.
 `, filepath.Base(os.Args[0]))
 
 
@@ -62,11 +63,12 @@ func main() {
     parser.AddFlag("tag t")
     parser.AddStr("out o", "output.mp3")
     parser.AddStr("dir d", "")
+    parser.AddStr("interlace i", "")
     parser.Parse()
 
     // Make sure we have a list of files to merge.
     var files []string
-    if parser.GetStr("dir") != "" {
+    if parser.Found("dir") {
         globs, err := filepath.Glob(path.Join(parser.GetStr("dir"), "*.mp3"))
         if err != nil {
             fmt.Fprintln(os.Stderr, err)
@@ -84,7 +86,12 @@ func main() {
         os.Exit(1)
     }
 
-    // Make sure the files exist.
+    // Are we interlacing a spacer file?
+    if parser.Found("interlace") {
+        files = interlace(files, parser.GetStr("interlace"))
+    }
+
+    // Make sure all the files in the list actually exist.
     validateFiles(files)
 
     // Set debug mode if the user supplied a --debug flag.
@@ -102,7 +109,7 @@ func main() {
 }
 
 
-// Check that the specified files exist.
+// Check that all the files in the list exist.
 func validateFiles(files []string) {
     for _, file := range files {
         if _, err := os.Stat(file); err != nil {
@@ -112,6 +119,17 @@ func validateFiles(files []string) {
             os.Exit(1)
         }
     }
+}
+
+
+// Interlace a spacer file between each file in the list.
+func interlace(files []string, spacer string) []string {
+    var interlaced []string
+    for _, file := range files {
+        interlaced = append(interlaced, file)
+        interlaced = append(interlaced, spacer)
+    }
+    return interlaced[:len(interlaced) - 1]
 }
 
 
