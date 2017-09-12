@@ -18,7 +18,7 @@ import (
 )
 
 
-const version = "2.5.0"
+const version = "2.5.1"
 
 
 var helptext = fmt.Sprintf(`
@@ -56,13 +56,13 @@ func main() {
 
     // Parse the command line arguments.
     parser := clio.NewParser(helptext, version)
-    parser.AddFlag("force f")
-    parser.AddFlag("verbose v")
-    parser.AddFlag("debug")
-    parser.AddFlag("tag t")
-    parser.AddStr("out o", "output.mp3")
-    parser.AddStr("dir d", "")
-    parser.AddStr("interlace i", "")
+    parser.NewFlag("force f")
+    parser.NewFlag("verbose v")
+    parser.NewFlag("debug")
+    parser.NewFlag("tag t")
+    parser.NewStr("out o", "output.mp3")
+    parser.NewStr("dir d", "")
+    parser.NewStr("interlace i", "")
     parser.Parse()
 
     // Make sure we have a list of files to merge.
