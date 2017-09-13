@@ -14,11 +14,11 @@ import (
     "path/filepath"
     "golang.org/x/crypto/ssh/terminal"
     "github.com/dmulholland/mp3lib"
-    "github.com/dmulholland/clio/go/clio"
+    "github.com/dmulholland/args"
 )
 
 
-const version = "2.5.1"
+const version = "2.5.2"
 
 
 var helptext = fmt.Sprintf(`
@@ -55,20 +55,22 @@ Flags:
 func main() {
 
     // Parse the command line arguments.
-    parser := clio.NewParser(helptext, version)
+    parser := args.NewParser()
+    parser.Helptext = helptext
+    parser.Version = version
     parser.NewFlag("force f")
     parser.NewFlag("verbose v")
     parser.NewFlag("debug")
     parser.NewFlag("tag t")
-    parser.NewStr("out o", "output.mp3")
-    parser.NewStr("dir d", "")
-    parser.NewStr("interlace i", "")
+    parser.NewString("out o", "output.mp3")
+    parser.NewString("dir d")
+    parser.NewString("interlace i")
     parser.Parse()
 
     // Make sure we have a list of files to merge.
     var files []string
     if parser.Found("dir") {
-        globs, err := filepath.Glob(path.Join(parser.GetStr("dir"), "*.mp3"))
+        globs, err := filepath.Glob(path.Join(parser.GetString("dir"), "*.mp3"))
         if err != nil {
             fmt.Fprintln(os.Stderr, err)
             os.Exit(1)
@@ -87,7 +89,7 @@ func main() {
 
     // Are we interlacing a spacer file?
     if parser.Found("interlace") {
-        files = interlace(files, parser.GetStr("interlace"))
+        files = interlace(files, parser.GetString("interlace"))
     }
 
     // Make sure all the files in the list actually exist.
@@ -100,7 +102,7 @@ func main() {
 
     // Merge the input files.
     merge(
-        parser.GetStr("out"),
+        parser.GetString("out"),
         files,
         parser.GetFlag("force"),
         parser.GetFlag("verbose"),
