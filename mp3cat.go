@@ -18,7 +18,7 @@ import (
 )
 
 
-const version = "2.5.2"
+const version = "3.0.0"
 
 
 var helptext = fmt.Sprintf(`
@@ -45,10 +45,10 @@ Options:
 
 Flags:
   -f, --force             Overwrite an existing output file.
-      --help              Display this help text and exit.
+  -h, --help              Display this help text and exit.
+  -q, --quiet             Run in quiet mode.
   -t, --tag               Copy the ID3 tag from the first input file.
-  -v, --verbose           Report progress.
-      --version           Display the application's version number and exit.
+  -v, --version           Display the application's version number and exit.
 `, filepath.Base(os.Args[0]))
 
 
@@ -59,7 +59,7 @@ func main() {
     parser.Helptext = helptext
     parser.Version = version
     parser.NewFlag("force f")
-    parser.NewFlag("verbose v")
+    parser.NewFlag("quiet q")
     parser.NewFlag("debug")
     parser.NewFlag("tag t")
     parser.NewString("out o", "output.mp3")
@@ -105,7 +105,7 @@ func main() {
         parser.GetString("out"),
         files,
         parser.GetFlag("force"),
-        parser.GetFlag("verbose"),
+        parser.GetFlag("quiet"),
         parser.GetFlag("tag"))
 }
 
@@ -136,7 +136,7 @@ func interlace(files []string, spacer string) []string {
 
 // Create a new file at the specified output path containing the merged
 // contents of the list of input files.
-func merge(outpath string, inpaths []string, force, verbose, tag bool) {
+func merge(outpath string, inpaths []string, force, quiet, tag bool) {
 
     var totalFrames uint32
     var totalBytes uint32
@@ -172,7 +172,7 @@ func merge(outpath string, inpaths []string, force, verbose, tag bool) {
         os.Exit(1)
     }
 
-    if verbose {
+    if !quiet {
         line()
     }
 
@@ -180,7 +180,7 @@ func merge(outpath string, inpaths []string, force, verbose, tag bool) {
     // file.
     for _, inpath := range inpaths {
 
-        if verbose {
+        if !quiet {
             fmt.Println("+", inpath)
         }
 
@@ -232,13 +232,13 @@ func merge(outpath string, inpaths []string, force, verbose, tag bool) {
     }
 
     outfile.Close()
-    if verbose {
+    if !quiet {
         line()
     }
 
     // If we detected multiple bitrates, prepend a VBR header to the file.
     if isVBR {
-        if verbose {
+        if !quiet {
             fmt.Println("• Multiple bitrates detected. Adding VBR header.")
         }
         addXingHeader(outpath, totalFrames, totalBytes)
@@ -248,14 +248,14 @@ func merge(outpath string, inpaths []string, force, verbose, tag bool) {
     // operations is important here. The ID3 tag must be the first item in
     // the file - in particular, it must come *before* any VBR header.
     if tag {
-        if verbose {
+        if !quiet {
             fmt.Println("• Adding ID3 tag.")
         }
         addID3v2Tag(outpath, inpaths[0])
     }
 
     // Print a count of the number of files merged.
-    if verbose {
+    if !quiet {
         fmt.Printf("• %v files merged.\n", totalFiles)
         line()
     }
