@@ -7,9 +7,16 @@ MP3Cat is a fast command-line utility for merging MP3 files without re-encoding.
 
     Usage: mp3cat [FLAGS] [OPTIONS] [ARGUMENTS]
 
-      Concatenates MP3 files without re-encoding. Supports both constant bit
-      rate (CBR) and variable bit rate (VBR) files. Strips ID3 tags and
-      garbage data from the output.
+      This tool concatenates MP3 files without re-encoding. It supports both
+      constant bit rate (CBR) and variable bit rate (VBR) MP3 files.
+
+      Files to be merged can be specified as a list of filenames:
+
+        $ mp3cat one.mp3 two.mp3 three.mp3
+
+      Alternatively, an entire directory of .mp3 files can be merged:
+
+        $ mp3cat --dir /path/to/directory/
 
     Arguments:
       [files]                 List of files to merge.
