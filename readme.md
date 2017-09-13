@@ -28,10 +28,10 @@ MP3Cat is a fast command-line utility for merging MP3 files without re-encoding.
 
     Flags:
       -f, --force             Overwrite an existing output file.
-          --help              Display this help text and exit.
+      -h, --help              Display this help text and exit.
+      -q, --quiet             Run in quiet mode.
       -t, --tag               Copy the ID3 tag from the first input file.
-      -v, --verbose           Report progress.
-          --version           Display the application's version number and exit.
+      -v, --version           Display the application's version number and exit.
 
 See the project's [homepage][] for details and binary downloads.
 
