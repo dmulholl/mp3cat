@@ -33,7 +33,7 @@ Usage: %s [FLAGS] [OPTIONS] [ARGUMENTS]
 
   Alternatively, an entire directory of .mp3 files can be merged:
 
-    $ mp3cat --dir /path/to/directory/
+    $ mp3cat --dir /path/to/directory
 
 Arguments:
   [files]                 List of files to merge.
