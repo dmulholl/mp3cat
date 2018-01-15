@@ -18,7 +18,7 @@ import (
 )
 
 
-const version = "3.0.0"
+const version = "3.1.0.dev"
 
 
 var helptext = fmt.Sprintf(`
@@ -70,7 +70,8 @@ func main() {
     // Make sure we have a list of files to merge.
     var files []string
     if parser.Found("dir") {
-        globs, err := filepath.Glob(path.Join(parser.GetString("dir"), "*.mp3"))
+        pattern := "*.[Mm][Pp]3"
+        globs, err := filepath.Glob(path.Join(parser.GetString("dir"), pattern))
         if err != nil {
             fmt.Fprintln(os.Stderr, err)
             os.Exit(1)
