@@ -14,11 +14,11 @@ import (
     "path/filepath"
     "golang.org/x/crypto/ssh/terminal"
     "github.com/dmulholland/mp3lib"
-    "github.com/dmulholland/args"
+    "github.com/dmulholland/janus-go/janus"
 )
 
 
-const version = "3.0.1"
+const version = "3.0.2"
 
 
 var helptext = fmt.Sprintf(`
@@ -55,7 +55,7 @@ Flags:
 func main() {
 
     // Parse the command line arguments.
-    parser := args.NewParser()
+    parser := janus.NewParser()
     parser.Helptext = helptext
     parser.Version = version
     parser.NewFlag("force f")
