@@ -7,8 +7,12 @@ MP3Cat is a fast command-line utility for merging MP3 files without re-encoding.
 
     Usage: mp3cat [FLAGS] [OPTIONS] [ARGUMENTS]
 
-      This tool concatenates MP3 files without re-encoding. It supports both
-      constant bit rate (CBR) and variable bit rate (VBR) MP3 files.
+      This tool concatenates MP3 files without re-encoding. It can join constant
+      bit-rate (CBR) files, variable bit-rate (VBR) files, or a mixture of both.
+
+      If a set of input CBR files share the same bit-rate, the output file will
+      also be CBR; if the input files have different bit-rates, the output file
+      will be VBR.
 
       Files to be merged can be specified as a list of filenames:
 
