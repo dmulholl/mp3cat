@@ -18,7 +18,7 @@ import (
 )
 
 
-const version = "3.0.4"
+const version = "3.1.0"
 
 
 var helptext = fmt.Sprintf(`
@@ -282,10 +282,7 @@ func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
         os.Exit(1)
     }
 
-    templateFrame := mp3lib.NextFrame(inputFile)
-    inputFile.Seek(0, 0)
-
-    xingHeader := mp3lib.NewXingHeader(templateFrame, totalFrames, totalBytes)
+    xingHeader := mp3lib.NewXingHeader(totalFrames, totalBytes)
 
     _, err = outputFile.Write(xingHeader.RawBytes)
     if err != nil {
