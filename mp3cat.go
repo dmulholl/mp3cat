@@ -18,7 +18,7 @@ import (
 )
 
 
-const version = "3.1.0"
+const version = "3.2.0"
 
 
 var helptext = fmt.Sprintf(`
@@ -178,7 +178,7 @@ func merge(outpath string, inpaths []string, force, quiet, tag bool) {
     }
 
     if !quiet {
-        line()
+        printLine()
     }
 
     // Loop over the input files and append their MP3 frames to the output
@@ -238,7 +238,7 @@ func merge(outpath string, inpaths []string, force, quiet, tag bool) {
 
     outfile.Close()
     if !quiet {
-        line()
+        printLine()
     }
 
     // If we detected multiple bitrates, prepend a VBR header to the file.
@@ -262,7 +262,7 @@ func merge(outpath string, inpaths []string, force, quiet, tag bool) {
     // Print a count of the number of files merged.
     if !quiet {
         fmt.Printf("• %v files merged.\n", totalFiles)
-        line()
+        printLine()
     }
 }
 
@@ -369,14 +369,15 @@ func addID3v2Tag(mp3Path, tagPath string) {
 
 
 // Print a line to stdout if we're running in a terminal.
-func line() {
+func printLine() {
     if terminal.IsTerminal(int(os.Stdout.Fd())) {
         width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
         if err == nil {
+            fmt.Print("\u001B[90m")
             for i := 0; i < width; i++ {
                 fmt.Print("─")
             }
-            fmt.Println()
+            fmt.Println("\u001B[0m")
         }
     }
 }
