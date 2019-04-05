@@ -12,13 +12,14 @@ import (
     "os"
     "path"
     "path/filepath"
+    "runtime"
     "golang.org/x/crypto/ssh/terminal"
     "github.com/dmulholland/mp3lib"
     "github.com/dmulholland/janus-go/janus"
 )
 
 
-const version = "3.2.0"
+const version = "3.3.0"
 
 
 var helptext = fmt.Sprintf(`
@@ -184,7 +185,6 @@ func merge(outpath string, inpaths []string, force, quiet, tag bool) {
     // Loop over the input files and append their MP3 frames to the output
     // file.
     for _, inpath := range inpaths {
-
         if !quiet {
             fmt.Println("+", inpath)
         }
@@ -198,7 +198,6 @@ func merge(outpath string, inpaths []string, force, quiet, tag bool) {
         isFirstFrame := true
 
         for {
-
             // Read the next frame from the input file.
             frame := mp3lib.NextFrame(infile)
             if frame == nil {
@@ -373,11 +372,18 @@ func printLine() {
     if terminal.IsTerminal(int(os.Stdout.Fd())) {
         width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
         if err == nil {
-            fmt.Print("\u001B[90m")
-            for i := 0; i < width; i++ {
-                fmt.Print("─")
+            if runtime.GOOS == "windows" {
+                for i := 0; i < width; i++ {
+                    fmt.Print("-")
+                }
+                fmt.Println()
+            } else {
+                fmt.Print("\u001B[90m")
+                for i := 0; i < width; i++ {
+                    fmt.Print("─")
+                }
+                fmt.Println("\u001B[0m")
             }
-            fmt.Println("\u001B[0m")
         }
     }
 }
