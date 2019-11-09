@@ -14,12 +14,12 @@ import (
     "path/filepath"
     "runtime"
     "golang.org/x/crypto/ssh/terminal"
-    "github.com/dmulholland/mp3lib"
-    "github.com/dmulholland/janus-go/janus"
+    "github.com/dmulholl/mp3lib"
+    "github.com/dmulholl/janus-go/janus"
 )
 
 
-const version = "3.3.0"
+const version = "3.3.1"
 
 
 var helptext = fmt.Sprintf(`
