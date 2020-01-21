@@ -19,7 +19,7 @@ import (
 )
 
 
-const version = "3.3.1"
+const version = "4.0.0.dev"
 
 
 var helptext = fmt.Sprintf(`
@@ -44,15 +44,15 @@ Arguments:
   [files]                 List of files to merge.
 
 Options:
+  -c, --copy-meta <n>     Copy the ID3 metadata tag from the n-th input file.
   -d, --dir <path>        Directory of files to merge.
   -i, --interlace <path>  Interlace a spacer file between each input file.
-  -o, --out <path>        Output filename. Defaults to 'output.mp3'.
+  -o, --out <path>        Output filepath. Defaults to 'output.mp3'.
 
 Flags:
   -f, --force             Overwrite an existing output file.
   -h, --help              Display this help text and exit.
   -q, --quiet             Run in quiet mode.
-  -t, --tag               Copy the ID3 tag from the first input file.
   -v, --version           Display the application's version number and exit.
 `, filepath.Base(os.Args[0]))
 
@@ -66,10 +66,10 @@ func main() {
     parser.NewFlag("force f")
     parser.NewFlag("quiet q")
     parser.NewFlag("debug")
-    parser.NewFlag("tag t")
     parser.NewString("out o", "output.mp3")
     parser.NewString("dir d")
     parser.NewString("interlace i")
+    parser.NewInt("copy-meta c")
     parser.Parse()
 
     // Make sure we have a list of files to merge.
@@ -93,6 +93,17 @@ func main() {
         os.Exit(1)
     }
 
+    // Are we copying the ID3 tag from the n-th input file?
+    var tagpath string
+    if parser.Found("copy-meta") {
+        tagindex := parser.GetInt("copy-meta") - 1
+        if tagindex < 0 || tagindex > (len(files) - 1) {
+            fmt.Fprintln(os.Stderr, "Error: --copy-meta argument is invalid.")
+            os.Exit(1)
+        }
+        tagpath = files[tagindex]
+    }
+
     // Are we interlacing a spacer file?
     if parser.Found("interlace") {
         files = interlace(files, parser.GetString("interlace"))
@@ -109,10 +120,10 @@ func main() {
     // Merge the input files.
     merge(
         parser.GetString("out"),
+        tagpath,
         files,
         parser.GetFlag("force"),
-        parser.GetFlag("quiet"),
-        parser.GetFlag("tag"))
+        parser.GetFlag("quiet"))
 }
 
 
@@ -142,7 +153,7 @@ func interlace(files []string, spacer string) []string {
 
 // Create a new file at the specified output path containing the merged
 // contents of the list of input files.
-func merge(outpath string, inpaths []string, force, quiet, tag bool) {
+func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 
     var totalFrames uint32
     var totalBytes uint32
@@ -182,8 +193,7 @@ func merge(outpath string, inpaths []string, force, quiet, tag bool) {
         printLine()
     }
 
-    // Loop over the input files and append their MP3 frames to the output
-    // file.
+    // Loop over the input files and append their MP3 frames to the output file.
     for _, inpath := range inpaths {
         if !quiet {
             fmt.Println("+", inpath)
@@ -248,14 +258,14 @@ func merge(outpath string, inpaths []string, force, quiet, tag bool) {
         addXingHeader(outpath, totalFrames, totalBytes)
     }
 
-    // Copy the ID3v2 tag from the first input file if requested. Order of
+    // Copy the ID3v2 tag from the n-th input file if requested. Order of
     // operations is important here. The ID3 tag must be the first item in
     // the file - in particular, it must come *before* any VBR header.
-    if tag {
+    if tagpath != "" {
         if !quiet {
-            fmt.Println("• Adding ID3 tag.")
+            fmt.Printf("• Copying ID3 tag from: %s\n", tagpath)
         }
-        addID3v2Tag(outpath, inpaths[0])
+        addID3v2Tag(outpath, tagpath)
     }
 
     // Print a count of the number of files merged.
