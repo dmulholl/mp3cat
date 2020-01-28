@@ -19,7 +19,7 @@ import (
 )
 
 
-const version = "4.0.0"
+const version = "4.0.1"
 
 
 var helptext = fmt.Sprintf(`
@@ -52,7 +52,7 @@ Options:
 Flags:
   -f, --force             Overwrite an existing output file.
   -h, --help              Display this help text and exit.
-  -q, --quiet             Run in quiet mode.
+  -q, --quiet             Run in quiet mode. Only output error messages.
   -v, --version           Display the application's version number and exit.
 `, filepath.Base(os.Args[0]))
 
