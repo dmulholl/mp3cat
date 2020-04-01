@@ -9,4 +9,4 @@ MP3Cat is a simple command line utility for concatenating MP3 files without re-e
 
 See the [documentation] for details.
 
-[documentation]: https://darrenmulholland.com/dev/mp3cat.html
+[documentation]: http://www.dmulholl.com/dev/mp3cat.html
