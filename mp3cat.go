@@ -5,21 +5,20 @@
 */
 package main
 
-
 import (
     "fmt"
+    "github.com/dmulholl/janus-go/janus"
+    "github.com/dmulholl/mp3lib"
+    "golang.org/x/crypto/ssh/terminal"
     "io"
     "os"
-    "path"
     "path/filepath"
     "runtime"
-    "golang.org/x/crypto/ssh/terminal"
-    "github.com/dmulholl/mp3lib"
-    "github.com/dmulholl/janus-go/janus"
+    "strings"
 )
 
 
-const version = "4.0.1"
+const version = "4.0.2"
 
 
 var helptext = fmt.Sprintf(`
@@ -58,7 +57,6 @@ Flags:
 
 
 func main() {
-
     // Parse the command line arguments.
     parser := janus.NewParser()
     parser.Helptext = helptext
@@ -75,8 +73,14 @@ func main() {
     // Make sure we have a list of files to merge.
     var files []string
     if parser.Found("dir") {
-        pattern := "*.[Mm][Pp]3"
-        globs, err := filepath.Glob(path.Join(parser.GetString("dir"), pattern))
+        var globs []string
+        err := filepath.Walk(parser.GetString("dir"), func(path string, info os.FileInfo, err error) error {
+            ext := strings.ToLower(filepath.Ext(info.Name()))
+            if ext == ".mp3" {
+                globs = append(globs, path)
+            }
+            return nil
+        })
         if err != nil {
             fmt.Fprintln(os.Stderr, err)
             os.Exit(1)
