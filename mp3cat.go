@@ -18,7 +18,7 @@ import (
 )
 
 
-const version = "4.0.2"
+const version = "4.0.3"
 
 
 var helptext = fmt.Sprintf(`
@@ -73,11 +73,10 @@ func main() {
     // Make sure we have a list of files to merge.
     var files []string
     if parser.Found("dir") {
-        var globs []string
         err := filepath.Walk(parser.GetString("dir"), func(path string, info os.FileInfo, err error) error {
             ext := strings.ToLower(filepath.Ext(info.Name()))
             if ext == ".mp3" {
-                globs = append(globs, path)
+                files = append(files, path)
             }
             return nil
         })
@@ -85,11 +84,10 @@ func main() {
             fmt.Fprintln(os.Stderr, err)
             os.Exit(1)
         }
-        if globs == nil || len(globs) == 0 {
+        if files == nil || len(files) == 0 {
             fmt.Fprintln(os.Stderr, "Error: no files found.")
             os.Exit(1)
         }
-        files = globs
     } else if parser.HasArgs() {
         files = parser.GetArgs()
     } else {
