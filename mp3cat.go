@@ -1,41 +1,35 @@
 /*
-    MP3Cat is a fast command line utility for concatenating MP3 files
-    without re-encoding. It supports both constant bit rate (CBR) and
-    variable bit rate (VBR) files.
+    MP3Cat is a simple command line utility for concatenating MP3 files
+    without re-encoding.
 */
 package main
 
+
 import (
     "fmt"
-    "github.com/dmulholl/janus-go/janus"
-    "github.com/dmulholl/mp3lib"
-    "golang.org/x/crypto/ssh/terminal"
     "io"
     "os"
     "path/filepath"
     "runtime"
     "strings"
+    "github.com/dmulholl/janus-go/janus"
+    "github.com/dmulholl/mp3lib"
+    "golang.org/x/crypto/ssh/terminal"
 )
 
 
-const version = "4.0.3"
+const version = "4.0.4"
 
 
 var helptext = fmt.Sprintf(`
 Usage: %s [FLAGS] [OPTIONS] [ARGUMENTS]
 
-  This tool concatenates MP3 files without re-encoding. It can join constant
-  bit-rate (CBR) files, variable bit-rate (VBR) files, or a mixture of both.
-
-  If a set of input CBR files share the same bit-rate, the output file will
-  also be CBR; if the input files have different bit-rates, the output file
-  will be VBR.
-
-  Files to be merged can be specified as a list of filenames:
+  This tool concatenates MP3 files without re-encoding. Input files can be
+  specified as a list of filenames:
 
     $ mp3cat one.mp3 two.mp3 three.mp3
 
-  Alternatively, an entire directory of .mp3 files can be merged:
+  Alternatively, an entire directory of .mp3 files can be concatenated:
 
     $ mp3cat --dir /path/to/directory
 
@@ -52,7 +46,7 @@ Flags:
   -f, --force             Overwrite an existing output file.
   -h, --help              Display this help text and exit.
   -q, --quiet             Run in quiet mode. Only output error messages.
-  -v, --version           Display the application's version number and exit.
+  -v, --version           Display the version number and exit.
 `, filepath.Base(os.Args[0]))
 
 
@@ -99,7 +93,7 @@ func main() {
     var tagpath string
     if parser.Found("copy-meta") {
         tagindex := parser.GetInt("copy-meta") - 1
-        if tagindex < 0 || tagindex > (len(files) - 1) {
+        if tagindex < 0 || tagindex > (len(files)-1) {
             fmt.Fprintln(os.Stderr, "Error: --copy-meta argument is invalid.")
             os.Exit(1)
         }
@@ -149,7 +143,7 @@ func interlace(files []string, spacer string) []string {
         interlaced = append(interlaced, file)
         interlaced = append(interlaced, spacer)
     }
-    return interlaced[:len(interlaced) - 1]
+    return interlaced[:len(interlaced)-1]
 }
 
 
@@ -316,7 +310,7 @@ func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
         os.Exit(1)
     }
 
-    err = os.Rename(filepath + ".mp3cat.tmp", filepath)
+    err = os.Rename(filepath+".mp3cat.tmp", filepath)
     if err != nil {
         fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
@@ -370,7 +364,7 @@ func addID3v2Tag(mp3Path, tagPath string) {
             os.Exit(1)
         }
 
-        err = os.Rename(mp3Path + ".mp3cat.tmp", mp3Path)
+        err = os.Rename(mp3Path+".mp3cat.tmp", mp3Path)
         if err != nil {
             fmt.Fprintln(os.Stderr, err)
             os.Exit(1)
