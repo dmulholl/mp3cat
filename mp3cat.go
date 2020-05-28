@@ -18,7 +18,7 @@ import (
 )
 
 
-const version = "4.0.4"
+const version = "4.1.0"
 
 
 var helptext = fmt.Sprintf(`
@@ -37,15 +37,14 @@ Arguments:
   [files]                 List of files to merge.
 
 Options:
-  -c, --copy-meta <n>     Copy the ID3 metadata tag from the n-th input file.
   -d, --dir <path>        Directory of files to merge.
-  -i, --interlace <path>  Interlace a spacer file between each input file.
+  -m, --meta <n>          Copy ID3 metadata from the n-th input file.
   -o, --out <path>        Output filepath. Defaults to 'output.mp3'.
 
 Flags:
   -f, --force             Overwrite an existing output file.
   -h, --help              Display this help text and exit.
-  -q, --quiet             Run in quiet mode. Only output error messages.
+  -q, --quiet             Quiet mode. Only output error messages.
   -v, --version           Display the version number and exit.
 `, filepath.Base(os.Args[0]))
 
@@ -61,7 +60,7 @@ func main() {
     parser.NewString("out o", "output.mp3")
     parser.NewString("dir d")
     parser.NewString("interlace i")
-    parser.NewInt("copy-meta c")
+    parser.NewInt("copy-meta c meta m")
     parser.Parse()
 
     // Make sure we have a list of files to merge.
@@ -94,7 +93,7 @@ func main() {
     if parser.Found("copy-meta") {
         tagindex := parser.GetInt("copy-meta") - 1
         if tagindex < 0 || tagindex > (len(files)-1) {
-            fmt.Fprintln(os.Stderr, "Error: --copy-meta argument is invalid.")
+            fmt.Fprintln(os.Stderr, "Error: --meta argument is invalid.")
             os.Exit(1)
         }
         tagpath = files[tagindex]
