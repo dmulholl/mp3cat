@@ -12,17 +12,17 @@ import (
     "path/filepath"
     "runtime"
     "strings"
-    "github.com/dmulholl/janus-go/janus"
+    "github.com/dmulholl/janus/v2"
     "github.com/dmulholl/mp3lib"
     "golang.org/x/crypto/ssh/terminal"
 )
 
 
-const version = "4.1.0"
+const version = "4.1.1"
 
 
 var helptext = fmt.Sprintf(`
-Usage: %s [FLAGS] [OPTIONS] [ARGUMENTS]
+Usage: %s [files]
 
   This tool concatenates MP3 files without re-encoding. Input files can be
   specified as a list of filenames:
