@@ -1,9 +1,8 @@
 # MP3Cat
 
-[documentation]: http://www.dmulholl.com/dev/mp3cat.html
-[releases]: https://github.com/dmulholl/mp3cat/releases
-[mp3binder]: https://github.com/crra/mp3binder
-
+[1]: http://www.dmulholl.com/dev/mp3cat.html
+[2]: https://github.com/dmulholl/mp3cat/releases
+[3]: https://github.com/crra/mp3binder
 
 MP3Cat is a simple command line utility for concatenating MP3 files without re-encoding.
 
@@ -11,8 +10,7 @@ MP3Cat is a simple command line utility for concatenating MP3 files without re-e
     <img src="mp3cat.png" width="600px">
 </p>
 
-* [Documentation][]
-* [Pre-built Binaries][releases]
+* [Documentation][1]
+* [Pre-built Binaries][2]
 
-Note that this application is in *maintenance mode* &mdash; it's intentionally simple and I'm not planning to add any extra features.
-If you need something more complex check out [mp3binder][] which is an active fork with additional functionality.
+If you need more features check out [mp3binder][3] which is an active fork with additional functionality.
