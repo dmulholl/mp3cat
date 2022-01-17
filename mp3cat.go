@@ -1,7 +1,3 @@
-/*
-   MP3Cat is a simple command line utility for concatenating MP3 files
-   without re-encoding.
-*/
 package main
 
 import (
