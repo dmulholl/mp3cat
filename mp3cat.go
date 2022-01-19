@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/dmulholl/janus/v2"
+	"github.com/dmulholl/argo"
 	"github.com/dmulholl/mp3lib"
 	"golang.org/x/crypto/ssh/terminal"
 	"io"
@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const version = "4.1.1"
+const version = "4.2.0"
 
 var helptext = fmt.Sprintf(`
 Usage: %s [files]
@@ -43,30 +43,32 @@ Flags:
 
 func main() {
 	// Parse the command line arguments.
-	parser := janus.NewParser()
+	parser := argo.NewParser()
 	parser.Helptext = helptext
 	parser.Version = version
 	parser.NewFlag("force f")
 	parser.NewFlag("quiet q")
 	parser.NewFlag("debug")
-	parser.NewString("out o", "output.mp3")
-	parser.NewString("dir d")
-	parser.NewString("interlace i")
-	parser.NewInt("copy-meta c meta m")
+	parser.NewStringOption("out o", "output.mp3")
+	parser.NewStringOption("dir d", "")
+	parser.NewStringOption("interlace i", "")
+	parser.NewIntOption("meta m", 0)
 	parser.Parse()
 
 	// Make sure we have a list of files to merge.
 	var files []string
 	if parser.Found("dir") {
-		err := filepath.Walk(parser.GetString("dir"), func(path string, info os.FileInfo, err error) error {
-			ext := strings.ToLower(filepath.Ext(info.Name()))
-			if ext == ".mp3" {
+		err := filepath.Walk(parser.StringValue("dir"), func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if strings.ToLower(filepath.Ext(info.Name())) == ".mp3" {
 				files = append(files, path)
 			}
 			return nil
 		})
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 		if files == nil || len(files) == 0 {
@@ -74,7 +76,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else if parser.HasArgs() {
-		files = parser.GetArgs()
+		files = parser.Args()
 	} else {
 		fmt.Fprintln(os.Stderr, "Error: you must specify files to merge.")
 		os.Exit(1)
@@ -82,10 +84,10 @@ func main() {
 
 	// Are we copying the ID3 tag from the n-th input file?
 	var tagpath string
-	if parser.Found("copy-meta") {
-		tagindex := parser.GetInt("copy-meta") - 1
-		if tagindex < 0 || tagindex > (len(files)-1) {
-			fmt.Fprintln(os.Stderr, "Error: --meta argument is invalid.")
+	if parser.Found("meta") {
+		tagindex := parser.IntValue("meta") - 1
+		if tagindex < 0 || tagindex > int64(len(files)-1) {
+			fmt.Fprintln(os.Stderr, "Error: --meta argument is out of range.")
 			os.Exit(1)
 		}
 		tagpath = files[tagindex]
@@ -93,33 +95,31 @@ func main() {
 
 	// Are we interlacing a spacer file?
 	if parser.Found("interlace") {
-		files = interlace(files, parser.GetString("interlace"))
+		files = interlace(files, parser.StringValue("interlace"))
 	}
 
 	// Make sure all the files in the list actually exist.
 	validateFiles(files)
 
 	// Set debug mode if the user supplied a --debug flag.
-	if parser.GetFlag("debug") {
+	if parser.Found("debug") {
 		mp3lib.DebugMode = true
 	}
 
 	// Merge the input files.
 	merge(
-		parser.GetString("out"),
+		parser.StringValue("out"),
 		tagpath,
 		files,
-		parser.GetFlag("force"),
-		parser.GetFlag("quiet"))
+		parser.Found("force"),
+		parser.Found("quiet"))
 }
 
 // Check that all the files in the list exist.
 func validateFiles(files []string) {
 	for _, file := range files {
 		if _, err := os.Stat(file); err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Error: the file '%v' does not exist.\n", file)
+			fmt.Fprintf(os.Stderr, "Error: the file '%v' does not exist.\n", file)
 			os.Exit(1)
 		}
 	}
@@ -148,9 +148,7 @@ func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 	// Only overwrite an existing file if the --force flag has been used.
 	if _, err := os.Stat(outpath); err == nil {
 		if !force {
-			fmt.Fprintf(
-				os.Stderr,
-				"Error: the file '%v' already exists.\n", outpath)
+			fmt.Fprintf(os.Stderr, "Error: the file '%v' already exists.\n", outpath)
 			os.Exit(1)
 		}
 	}
@@ -159,9 +157,7 @@ func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 	// infinite loop.
 	for _, filepath := range inpaths {
 		if filepath == outpath {
-			fmt.Fprintln(
-				os.Stderr,
-				"Error: the list of input files includes the output file.")
+			fmt.Fprintln(os.Stderr, "Error: the list of input files includes the output file.")
 			os.Exit(1)
 		}
 	}
@@ -169,7 +165,7 @@ func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 	// Create the output file.
 	outfile, err := os.Create(outpath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 
@@ -185,7 +181,7 @@ func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 
 		infile, err := os.Open(inpath)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 
@@ -217,7 +213,7 @@ func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 			// Write the frame to the output file.
 			_, err := outfile.Write(frame.RawBytes)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				fmt.Fprintln(os.Stderr, "Error:", err)
 				os.Exit(1)
 			}
 
@@ -264,13 +260,13 @@ func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
 
 	outputFile, err := os.Create(filepath + ".mp3cat.tmp")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 
 	inputFile, err := os.Open(filepath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 
@@ -278,13 +274,13 @@ func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
 
 	_, err = outputFile.Write(xingHeader.RawBytes)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 
 	_, err = io.Copy(outputFile, inputFile)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 
@@ -293,13 +289,13 @@ func addXingHeader(filepath string, totalFrames, totalBytes uint32) {
 
 	err = os.Remove(filepath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 
 	err = os.Rename(filepath+".mp3cat.tmp", filepath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 }
@@ -309,7 +305,7 @@ func addID3v2Tag(mp3Path, tagPath string) {
 
 	tagFile, err := os.Open(tagPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 
@@ -319,25 +315,25 @@ func addID3v2Tag(mp3Path, tagPath string) {
 	if id3tag != nil {
 		outputFile, err := os.Create(mp3Path + ".mp3cat.tmp")
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 
 		inputFile, err := os.Open(mp3Path)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 
 		_, err = outputFile.Write(id3tag.RawBytes)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 
 		_, err = io.Copy(outputFile, inputFile)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 
@@ -346,13 +342,13 @@ func addID3v2Tag(mp3Path, tagPath string) {
 
 		err = os.Remove(mp3Path)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 
 		err = os.Rename(mp3Path+".mp3cat.tmp", mp3Path)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 	}
