@@ -58,15 +58,17 @@ func main() {
 	// Make sure we have a list of files to merge.
 	var files []string
 	if parser.Found("dir") {
-		err := filepath.Walk(parser.StringValue("dir"), func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if strings.ToLower(filepath.Ext(info.Name())) == ".mp3" {
-				files = append(files, path)
-			}
-			return nil
-		})
+		err := filepath.Walk(
+			parser.StringValue("dir"),
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if strings.ToLower(filepath.Ext(info.Name())) == ".mp3" {
+					files = append(files, path)
+				}
+				return nil
+			})
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
@@ -135,10 +137,8 @@ func interlace(files []string, spacer string) []string {
 	return interlaced[:len(interlaced)-1]
 }
 
-// Create a new file at the specified output path containing the merged
-// contents of the list of input files.
+// Create a new file at [outpath] containing the merged contents of the list of input files.
 func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
-
 	var totalFrames uint32
 	var totalBytes uint32
 	var totalFiles int
@@ -153,8 +153,7 @@ func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 		}
 	}
 
-	// If the list of input files includes the output file we'll end up in an
-	// infinite loop.
+	// If the list of input files includes the output file we'll end up in an infinite loop.
 	for _, filepath := range inpaths {
 		if filepath == outpath {
 			fmt.Fprintln(os.Stderr, "Error: the list of input files includes the output file.")
@@ -202,8 +201,7 @@ func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 				}
 			}
 
-			// If we detect more than one bitrate we'll need to add a VBR
-			// header to the output file.
+			// If we detect more than one bitrate we'll need to add a VBR header to the output file.
 			if firstBitRate == 0 {
 				firstBitRate = frame.BitRate
 			} else if frame.BitRate != firstBitRate {
@@ -238,9 +236,9 @@ func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
 		addXingHeader(outpath, totalFrames, totalBytes)
 	}
 
-	// Copy the ID3v2 tag from the n-th input file if requested. Order of
-	// operations is important here. The ID3 tag must be the first item in
-	// the file - in particular, it must come *before* any VBR header.
+	// Copy the ID3v2 tag from the n-th input file if requested. Order of operations is important
+	// here. The ID3 tag must be the first item in the file - in particular, it must come *before*
+	// any VBR header.
 	if tagpath != "" {
 		if !quiet {
 			fmt.Printf("• Copying ID3 tag from: %s\n", tagpath)
