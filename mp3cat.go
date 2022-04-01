@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/dmulholl/argo"
-	"github.com/dmulholl/mp3lib"
-	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/dmulholl/argo"
+	"github.com/dmulholl/mp3lib"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
-const version = "4.2.0"
+const version = "4.2.1"
 
 var helptext = fmt.Sprintf(`
 Usage: %s [files]
@@ -78,7 +79,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else if parser.HasArgs() {
-		files = parser.Args()
+		files = parser.Args
 	} else {
 		fmt.Fprintln(os.Stderr, "Error: you must specify files to merge.")
 		os.Exit(1)
@@ -88,7 +89,7 @@ func main() {
 	var tagpath string
 	if parser.Found("meta") {
 		tagindex := parser.IntValue("meta") - 1
-		if tagindex < 0 || tagindex > int64(len(files)-1) {
+		if tagindex < 0 || tagindex > len(files)-1 {
 			fmt.Fprintln(os.Stderr, "Error: --meta argument is out of range.")
 			os.Exit(1)
 		}
