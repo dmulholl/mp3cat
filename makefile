@@ -18,5 +18,5 @@ all:
 	@termline grey
 
 clean:
-	rm -r ./build
-	rm -r ./zipped
+	rm -rf ./build
+	rm -rf ./zipped
