@@ -5,14 +5,13 @@
 [3]: https://github.com/crra/mp3binder
 
 MP3Cat is a simple command line utility for concatenating MP3 files without re-encoding.
+See the [documentation][1] for details.
 
 <p align="center">
     <img src="mp3cat.png" width="600px">
 </p>
 
-See the [documentation][1] for details.
-
-MP3Cat is written in Go. If you have a Go compiler installed you can install MP3Cat by running
+MP3Cat is written in Go. If you have a Go compiler installed you can install MP3Cat by running:
 
     go install github.com/dmulholl/mp3cat@latest
 
