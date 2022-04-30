@@ -65,7 +65,7 @@ The output filename defaults to `output.mp3` but you can specify a custom filena
 
     $ mp3cat *.mp3 -o joined.mp3
 
-This utility works most reliably with constant-bit-rate input --- it will add a VBR header if it detects multiple bit-rates in the input files but variable-bit-rate MP3s have patchy player support and should generally be avoided if at all possible.
+This utility works most reliably with constant-bit-rate input &mdash; it will add a VBR header if it detects multiple bit-rates in the input files but variable-bit-rate MP3s have patchy player support and should generally be avoided if at all possible.
 
 
 
