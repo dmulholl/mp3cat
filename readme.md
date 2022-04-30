@@ -14,7 +14,21 @@ MP3Cat is a simple command line utility for concatenating MP3 files without re-e
 </p>
 
 
-### Usage
+
+## Installing
+
+MP3Cat is written in Go. If you have a Go compiler installed you can run:
+
+    $ go install github.com/dmulholl/mp3cat@latest
+
+This will download, compile, and install the latest version of the application
+to your `$GOPATH/bin` directory.
+
+Alternatively, you can find pre-compiled binaries [here][2].
+
+
+
+## Usage
 
 Run `mp3cat --help` to view the command line help:
 
@@ -55,26 +69,13 @@ This utility works most reliably with constant-bit-rate input --- it will add a 
 
 
 
-### Source Code
-
-MP3Cat is written in Go. If you have a Go compiler installed you can run:
-
-    $ go install github.com/dmulholl/mp3cat@latest
-
-This will download, compile, and install the latest version of the application
-to your `$GOPATH/bin` directory.
-
-Altertively, you can find pre-compiled binaries [here][2].
-
-
-
-### Status
+## Status
 
 This application is in *maintenance mode* &mdash; it's intentionally simple and I'm not planning to add any extra features.
 If you need something more complex check out [mp3binder][5] which is an active fork with additional functionality.
 
 
 
-### License
+## License
 
 This work has been placed in the public domain.
