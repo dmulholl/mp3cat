@@ -3,7 +3,7 @@ all:
 	GOOS=linux GOARCH=amd64 go build -o build/mp3cat-linux-amd64/mp3cat
 	GOOS=darwin GOARCH=amd64 go build -o build/mp3cat-mac-amd64/mp3cat
 	GOOS=darwin GOARCH=arm64 go build -o build/mp3cat-mac-arm64/mp3cat
-	GOOS=windows GOARCH=amd64 go build -o build/mp3cat-windows-amd64/mp3cat
+	GOOS=windows GOARCH=amd64 go build -o build/mp3cat-windows-amd64/mp3cat.exe
 	@termline grey
 	@tree build
 	@termline grey
