@@ -24,7 +24,7 @@ MP3Cat is written in Go. If you have a Go compiler installed you can run:
 This will download, compile, and install the latest version of the application
 to your `$GOPATH/bin` directory.
 
-Alternatively, you can find pre-compiled binaries [here][2].
+Alternatively, you can download a pre-compiled binary from the [releases page][2].
 
 
 
