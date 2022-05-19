@@ -15,7 +15,13 @@ MP3Cat is a simple command line utility for concatenating MP3 files without re-e
 
 
 
-## Installing
+## Download
+
+You can download a pre-compiled binary from the [releases page][2].
+
+
+
+## Build
 
 MP3Cat is written in Go. If you have a Go compiler installed you can run:
 
@@ -23,8 +29,6 @@ MP3Cat is written in Go. If you have a Go compiler installed you can run:
 
 This will download, compile, and install the latest version of the application
 to your `$GOPATH/bin` directory.
-
-Alternatively, you can download a pre-compiled binary from the [releases page][2].
 
 
 
