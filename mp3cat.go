@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
+    "strconv"
 	"github.com/dmulholl/argo"
 	"github.com/dmulholl/mp3lib"
 	"golang.org/x/crypto/ssh/terminal"
@@ -33,7 +33,8 @@ Arguments:
 Options:
   -d, --dir <path>        Directory of files to merge.
   -m, --meta <n>          Copy ID3 metadata from the n-th input file.
-  -o, --out <path>        Output filepath. Defaults to 'output.mp3'.
+  -o, --out <path>        Output filepath. Defaults to 'output.mp3'. 
+  -g, --group <n>         Group a smaller chunk of n files together to merge instead of the entire list of files.  
 
 Flags:
   -f, --force             Overwrite an existing output file.
@@ -54,6 +55,7 @@ func main() {
 	parser.NewStringOption("dir d", "")
 	parser.NewStringOption("interlace i", "")
 	parser.NewIntOption("meta m", 0)
+	parser.NewIntOption("group g", 0)
 	parser.Parse()
 
 	// Make sure we have a list of files to merge.
@@ -95,10 +97,20 @@ func main() {
 		}
 		tagpath = files[tagindex]
 	}
+	
+	groupNumber := 0
+	if parser.Found("group") {
+	    groupNumber = parser.IntValue("group")
+		if groupNumber < 2 {
+		    fmt.Fprintln(os.Stderr, "Error: --group argument value must be equal to or greater than 2.")
+			os.Exit(1)
+		}
+	}
 
 	// Are we interlacing a spacer file?
 	if parser.Found("interlace") {
 		files = interlace(files, parser.StringValue("interlace"))
+		groupNumber = groupNumber * 2
 	}
 
 	// Make sure all the files in the list actually exist.
@@ -108,14 +120,38 @@ func main() {
 	if parser.Found("debug") {
 		mp3lib.DebugMode = true
 	}
+	
+	inputFiles := GenerateInputArray(groupNumber, files, parser.StringValue("out"))
 
 	// Merge the input files.
 	merge(
-		parser.StringValue("out"),
 		tagpath,
-		files,
+		inputFiles,
 		parser.Found("force"),
 		parser.Found("quiet"))
+}
+
+func GenerateInputArray(groupNumber int, files []string, output string) (map[string][]string) {
+     inputFiles := make(map[string][]string)
+	 filePrefix := 1
+	 var out string
+	 dir, file := filepath.Split(output)
+     if groupNumber > 0 {
+	    var temp []string
+	    for i, f := range files {
+		    out = filepath.Join(dir, strconv.Itoa(filePrefix)+"-"+file)
+		    temp = append(temp, f)
+			inputFiles[out] = temp
+			if ((i+1)%groupNumber) == 0 {
+			   filePrefix = filePrefix+1
+			   temp = []string{}
+			}
+			
+		}
+		return inputFiles
+	 }
+	 inputFiles[output] = files
+	 return inputFiles
 }
 
 // Check that all the files in the list exist.
@@ -139,119 +175,125 @@ func interlace(files []string, spacer string) []string {
 }
 
 // Create a new file at [outpath] containing the merged contents of the list of input files.
-func merge(outpath, tagpath string, inpaths []string, force, quiet bool) {
+func merge(tagpath string, inputFiles map[string][]string, force, quiet bool) {
 	var totalFrames uint32
 	var totalBytes uint32
 	var totalFiles int
+	var totalOutputFiles int
 	var firstBitRate int
 	var isVBR bool
-
-	// Only overwrite an existing file if the --force flag has been used.
-	if _, err := os.Stat(outpath); err == nil {
-		if !force {
-			fmt.Fprintf(os.Stderr, "Error: the file '%v' already exists.\n", outpath)
-			os.Exit(1)
-		}
-	}
-
-	// If the list of input files includes the output file we'll end up in an infinite loop.
-	for _, filepath := range inpaths {
-		if filepath == outpath {
-			fmt.Fprintln(os.Stderr, "Error: the list of input files includes the output file.")
-			os.Exit(1)
-		}
-	}
-
-	// Create the output file.
-	outfile, err := os.Create(outpath)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
-	}
-
-	if !quiet {
-		printLine()
-	}
-
-	// Loop over the input files and append their MP3 frames to the output file.
-	for _, inpath := range inpaths {
-		if !quiet {
-			fmt.Println("+", inpath)
+    
+	for outpath, inpaths := range inputFiles {
+	    fmt.Println("Output Path : "+outpath)
+		// Only overwrite an existing file if the --force flag has been used.
+		if _, err := os.Stat(outpath); err == nil {
+			if !force {
+				fmt.Fprintf(os.Stderr, "Error: the file '%v' already exists.\n", outpath)
+				os.Exit(1)
+			}
 		}
 
-		infile, err := os.Open(inpath)
+		// If the list of input files includes the output file we'll end up in an infinite loop.
+		for _, filepath := range inpaths {
+			if filepath == outpath {
+				fmt.Fprintln(os.Stderr, "Error: the list of input files includes the output file.")
+				os.Exit(1)
+			}
+		}
+
+		// Create the output file.
+		outfile, err := os.Create(outpath)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
 
-		isFirstFrame := true
+		if !quiet {
+			printLine()
+		}
 
-		for {
-			// Read the next frame from the input file.
-			frame := mp3lib.NextFrame(infile)
-			if frame == nil {
-				break
+		// Loop over the input files and append their MP3 frames to the output file.
+		for _, inpath := range inpaths {
+			if !quiet {
+				fmt.Println("+", inpath)
 			}
 
-			// Skip the first frame if it's a VBR header.
-			if isFirstFrame {
-				isFirstFrame = false
-				if mp3lib.IsXingHeader(frame) || mp3lib.IsVbriHeader(frame) {
-					continue
-				}
-			}
-
-			// If we detect more than one bitrate we'll need to add a VBR header to the output file.
-			if firstBitRate == 0 {
-				firstBitRate = frame.BitRate
-			} else if frame.BitRate != firstBitRate {
-				isVBR = true
-			}
-
-			// Write the frame to the output file.
-			_, err := outfile.Write(frame.RawBytes)
+			infile, err := os.Open(inpath)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "Error:", err)
 				os.Exit(1)
 			}
 
-			totalFrames += 1
-			totalBytes += uint32(len(frame.RawBytes))
+			isFirstFrame := true
+
+			for {
+				// Read the next frame from the input file.
+				frame := mp3lib.NextFrame(infile)
+				if frame == nil {
+					break
+				}
+
+				// Skip the first frame if it's a VBR header.
+				if isFirstFrame {
+					isFirstFrame = false
+					if mp3lib.IsXingHeader(frame) || mp3lib.IsVbriHeader(frame) {
+						continue
+					}
+				}
+
+				// If we detect more than one bitrate we'll need to add a VBR header to the output file.
+				if firstBitRate == 0 {
+					firstBitRate = frame.BitRate
+				} else if frame.BitRate != firstBitRate {
+					isVBR = true
+				}
+
+				// Write the frame to the output file.
+				_, err := outfile.Write(frame.RawBytes)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "Error:", err)
+					os.Exit(1)
+				}
+
+				totalFrames += 1
+				totalBytes += uint32(len(frame.RawBytes))
+			}
+
+			infile.Close()
+			totalFiles += 1
 		}
 
-		infile.Close()
-		totalFiles += 1
-	}
-
-	outfile.Close()
-	if !quiet {
-		printLine()
-	}
-
-	// If we detected multiple bitrates, prepend a VBR header to the file.
-	if isVBR {
+		outfile.Close()
 		if !quiet {
-			fmt.Println("• Multiple bitrates detected. Adding VBR header.")
+			printLine()
 		}
-		addXingHeader(outpath, totalFrames, totalBytes)
-	}
 
-	// Copy the ID3v2 tag from the n-th input file if requested. Order of operations is important
-	// here. The ID3 tag must be the first item in the file - in particular, it must come *before*
-	// any VBR header.
-	if tagpath != "" {
-		if !quiet {
-			fmt.Printf("• Copying ID3 tag from: %s\n", tagpath)
+		// If we detected multiple bitrates, prepend a VBR header to the file.
+		if isVBR {
+			if !quiet {
+				fmt.Println("• Multiple bitrates detected. Adding VBR header.")
+			}
+			addXingHeader(outpath, totalFrames, totalBytes)
 		}
-		addID3v2Tag(outpath, tagpath)
-	}
 
+		// Copy the ID3v2 tag from the n-th input file if requested. Order of operations is important
+		// here. The ID3 tag must be the first item in the file - in particular, it must come *before*
+		// any VBR header.
+		if tagpath != "" {
+			if !quiet {
+				fmt.Printf("• Copying ID3 tag from: %s\n", tagpath)
+			}
+			addID3v2Tag(outpath, tagpath)
+		}
+		totalOutputFiles = totalOutputFiles+1
+
+	}
 	// Print a count of the number of files merged.
-	if !quiet {
-		fmt.Printf("• %v files merged.\n", totalFiles)
-		printLine()
-	}
+		if !quiet {
+			fmt.Printf("• %v files merged.\n", totalFiles)
+			fmt.Printf("• %v output files written.\n", totalOutputFiles)
+			printLine()
+		}
 }
 
 // Prepend an Xing VBR header to the specified MP3 file.
