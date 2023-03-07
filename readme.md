@@ -25,7 +25,7 @@ You can download a pre-compiled binary from the [releases page][2].
 
 MP3Cat is written in Go. If you have a Go compiler installed you can run:
 
-    $ go install github.com/dmulholl/mp3cat@latest
+    go install github.com/dmulholl/mp3cat@latest
 
 This will download, compile, and install the latest version of the application
 to your `$GOPATH/bin` directory.
@@ -53,19 +53,19 @@ Run `mp3cat --help` to view the command line help:
       -q, --quiet             Run in quiet mode.
       -v, --version           Display the version number.
 
-You can specify the input as a list of filenames:
+You can specify the input as a list of filenames, e.g.
 
     $ mp3cat one.mp3 two.mp3 three.mp3
 
-On a *unixy* system, you can specify the input filenames via [globbing][4]:
+On a *unixy* system, you can specify the input filenames via [globbing][4], e.g.
 
     $ mp3cat *.mp3
 
-Alternatively, you can specify an entire directory of `.mp3` files to concatenate:
+Alternatively, you can specify an entire directory of `.mp3` files to concatenate, e.g.
 
     $ mp3cat --dir /path/to/directory
 
-The output filename defaults to `output.mp3` but you can specify a custom filename using the `-o/--out` option:
+The output filename defaults to `output.mp3` but you can specify a custom filename using the `-o/--out` option, e.g.
 
     $ mp3cat *.mp3 -o joined.mp3
 
