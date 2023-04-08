@@ -3,8 +3,6 @@
 [1]: http://www.dmulholl.com/dev/mp3cat.html
 [2]: https://github.com/dmulholl/mp3cat/releases
 [3]: https://github.com/crra/mp3binder
-[4]: https://en.wikipedia.org/wiki/Glob_(programming)
-[5]: https://github.com/crra/mp3binder
 
 
 MP3Cat is a simple command line utility for concatenating MP3 files without re-encoding.
@@ -57,7 +55,7 @@ You can specify the input as a list of filenames, e.g.
 
     $ mp3cat one.mp3 two.mp3 three.mp3
 
-On a *unixy* system, you can specify the input filenames via [globbing][4], e.g.
+Or, using globbing, e.g.
 
     $ mp3cat *.mp3
 
@@ -76,7 +74,7 @@ This utility works most reliably with constant-bit-rate input &mdash; it will ad
 ## Status
 
 This application is in *maintenance mode* &mdash; it's intentionally simple and I'm not planning to add any extra features.
-If you need something more complex check out [mp3binder][5] which is an active fork with additional functionality.
+If you need something more complex check out [mp3binder][3] which is an active fork with additional functionality.
 
 
 
