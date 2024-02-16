@@ -1,3 +1,6 @@
+help:
+	@cat ./makefile
+
 all:
 	@termline grey
 	GOOS=linux GOARCH=amd64 go build -o build/mp3cat-linux-amd64/mp3cat

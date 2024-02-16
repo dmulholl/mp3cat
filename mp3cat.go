@@ -8,12 +8,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/dmulholl/argo"
+	"github.com/dmulholl/argo/v4"
 	"github.com/dmulholl/mp3lib"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const version = "4.2.2"
+const version = "4.3.0"
 
 var helptext = fmt.Sprintf(`
 Usage: %s [files]
@@ -54,7 +54,11 @@ func main() {
 	parser.NewStringOption("dir d", "")
 	parser.NewStringOption("interlace i", "")
 	parser.NewIntOption("meta m", 0)
-	parser.Parse()
+
+	if err := parser.ParseOsArgs(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s.\n", err)
+		os.Exit(1)
+	}
 
 	// Make sure we have a list of files to merge.
 	var files []string
@@ -74,11 +78,11 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
-		if files == nil || len(files) == 0 {
+		if len(files) == 0 {
 			fmt.Fprintln(os.Stderr, "Error: no files found.")
 			os.Exit(1)
 		}
-	} else if parser.HasArgs() {
+	} else if len(parser.Args) > 0 {
 		files = parser.Args
 	} else {
 		fmt.Fprintln(os.Stderr, "Error: you must specify files to merge.")
