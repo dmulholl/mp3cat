@@ -1,12 +1,10 @@
 github.com/dmulholl/argo/v4 v4.0.0-alpha1 h1:VtQ58IRJhW/SbbwpnYiKIZWA7v26D7/5l/3QOmtiGLA=
 github.com/dmulholl/argo/v4 v4.0.0-alpha1/go.mod h1:61u4Dnie0k0TvcH4vGMUNivHHVdRuq8+vfVHS8novok=
+github.com/dmulholl/argo/v4 v4.0.0 h1:lssmNBCUxQUhM0C0foShfl368BrM+ZNT4Llso/zHUFc=
+github.com/dmulholl/argo/v4 v4.0.0/go.mod h1:61u4Dnie0k0TvcH4vGMUNivHHVdRuq8+vfVHS8novok=
 github.com/dmulholl/mp3lib v1.0.0 h1:PZq24kJBIk5zIxi/t6Qp8/EOAbAqThyrUCpkUKLBeWQ=
 github.com/dmulholl/mp3lib v1.0.0/go.mod h1:4RoA+iht/khfwxmH1ieoxZTzYVbb0am/zdvFkyGRr6I=
-golang.org/x/sys v0.5.0 h1:MUK/U/4lj1t1oPg0HfuXDN/Z1wv31ZJ/YcPiGccS4DU=
-golang.org/x/sys v0.5.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.17.0 h1:25cE3gD+tdBA7lp7QfhuV+rJiE9YXTcS3VG1SqssI/Y=
 golang.org/x/sys v0.17.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
-golang.org/x/term v0.5.0 h1:n2a8QNdAb0sZNpU9R1ALUXBbY+w51fCQDN+7EdxNBsY=
-golang.org/x/term v0.5.0/go.mod h1:jMB1sMXY+tzblOD4FWmEbocvup2/aLOaQEp7JmGp78k=
 golang.org/x/term v0.17.0 h1:mkTF7LCd6WGJNL3K1Ad7kwxNfYAW6a8a8QqtMblp/4U=
 golang.org/x/term v0.17.0/go.mod h1:lLRBjIVuehSbZlaOtGMbcMncT+aqLLLmKrsjNrUguwk=
