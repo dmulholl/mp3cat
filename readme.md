@@ -1,6 +1,6 @@
 # MP3Cat
 
-[1]: http://www.dmulholl.com/dev/mp3cat.html
+[1]: https://www.dmulholl.com/dev/mp3cat.html
 [2]: https://github.com/dmulholl/mp3cat/releases
 [3]: https://github.com/crra/mp3binder
 
