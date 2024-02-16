@@ -10,7 +10,7 @@ import (
 
 	"github.com/dmulholl/argo/v4"
 	"github.com/dmulholl/mp3lib"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 const version = "4.3.0"
@@ -359,8 +359,8 @@ func addID3v2Tag(mp3Path, tagPath string) {
 
 // Print a line to stdout if we're running in a terminal.
 func printLine() {
-	if terminal.IsTerminal(int(os.Stdout.Fd())) {
-		width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	if term.IsTerminal(int(os.Stdout.Fd())) {
+		width, _, err := term.GetSize(int(os.Stdout.Fd()))
 		if err == nil {
 			if runtime.GOOS == "windows" {
 				for i := 0; i < width; i++ {
